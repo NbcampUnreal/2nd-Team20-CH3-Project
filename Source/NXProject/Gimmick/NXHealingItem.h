@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Gimmick/NXItem.h"
-#include "NXDoor.generated.h"
+#include "NXHealingItem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NXPROJECT_API ANXDoor : public ANXItem
+class NXPROJECT_API ANXHealingItem : public ANXItem
 {
 	GENERATED_BODY()
 	

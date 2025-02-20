@@ -1,27 +1,39 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Gimmick/NXItem.h"
 
-// Sets default values
 ANXItem::ANXItem()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	// 틱(매 프레임 실행)은 필요 없으므로 끕니다.
+	PrimaryActorTick.bCanEverTick = false;
 }
 
-// Called when the game starts or when spawned
-void ANXItem::BeginPlay()
+// 플레이어가 아이템 범위에 들어왔을 때 동작
+void ANXItem::OnItemOverlap(AActor* OverlapActor)
 {
-	Super::BeginPlay();
-	
+	// 기본은 빈 함수 - 각 자식 클래스에서 구현
 }
 
-// Called every frame
-void ANXItem::Tick(float DeltaTime)
+// 플레이어가 아이템 범위를 벗어났을 때 동작
+void ANXItem::OnItemEndOverlap(AActor* OverlapActor)
 {
-	Super::Tick(DeltaTime);
+	// 기본은 빈 함수 - 필요하다면 자식 클래스에서 활용
+}
 
+// 아이템이 사용(Activate)되었을 때 동작
+void ANXItem::ActivateItem(AActor* Activator)
+{
+	// 기본은 빈 함수 - 자식 클래스에서 구현
+}
+
+// 아이템 유형을 반환
+FName ANXItem::GetItemType() const
+{
+	return ItemType;
+}
+
+// 아이템을 파괴(제거)하는 함수
+void ANXItem::DestroyItem()
+{
+	// AActor에서 제공하는 Destroy() 함수로 객체 제거
+	Destroy();
 }
 
