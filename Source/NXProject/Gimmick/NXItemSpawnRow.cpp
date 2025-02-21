@@ -1,12 +1,1 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Gimmick/NXItemSpawnRow.h"
-
-NXItemSpawnRow::NXItemSpawnRow()
-{
-}
-
-NXItemSpawnRow::~NXItemSpawnRow()
-{
-}

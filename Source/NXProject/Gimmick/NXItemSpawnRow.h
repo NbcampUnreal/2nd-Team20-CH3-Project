@@ -1,15 +1,19 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h" 
+#include "NXItemSpawnRow.generated.h"
 
-/**
- * 
- */
-class NXPROJECT_API NXItemSpawnRow
+USTRUCT(BlueprintType)
+struct FNXItemSpawnRow : public FTableRowBase
 {
+    GENERATED_BODY()
+
 public:
-	NXItemSpawnRow();
-	~NXItemSpawnRow();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FName ItemName;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<AActor> ItemClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float SpawnChance;
 };
