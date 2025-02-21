@@ -10,8 +10,8 @@ class UBoxComponent;
 UCLASS()
 class NXPROJECT_API ANXSpawnVolume : public AActor
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
     ANXSpawnVolume();
 
@@ -30,5 +30,5 @@ public:
     FVector GetRandomPointInVolume() const;
     FNXItemSpawnRow* GetRandomItem() const;
     void SpawnItem(TSubclassOf<AActor> ItemClass);
-   
+
 };

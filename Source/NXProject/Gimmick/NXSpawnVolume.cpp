@@ -66,17 +66,17 @@ FNXItemSpawnRow* ANXSpawnVolume::GetRandomItem() const
     }
 
 
-// 3) 0 ~ TotalChance 사이 랜덤 값
+    // 3) 0 ~ TotalChance 사이 랜덤 값
     const float RandValue = FMath::FRandRange(0.0f, TotalChance);
     float AccumulateChance = 0.0f;
 
-// 4) 누적 확률로 아이템 선택
+    // 4) 누적 확률로 아이템 선택
     for (FNXItemSpawnRow* Row : AllRows)
     {
         AccumulateChance += Row->SpawnChance;
         if (RandValue <= AccumulateChance)
         {
-        return Row;
+            return Row;
         }
     }
 
@@ -93,4 +93,3 @@ void ANXSpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass)
         FRotator::ZeroRotator
     );
 }
-
