@@ -24,10 +24,12 @@ ANXPlayerCharacter::ANXPlayerCharacter()
 
 	NormalSpeed = 600.0f;
 	SprintSpeedMultiplier = 1.5f;
+	CrouchSpeedMultiplier = 0.5f; // 걷기 속도의 50% (앉기 속도)
 	SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
+	CrouchSpeed = NormalSpeed * CrouchSpeedMultiplier;
 
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
-
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true; // 앉기 가능하도록 설정
 
 }
 
@@ -220,12 +222,29 @@ void ANXPlayerCharacter::StopAttack(const FInputActionValue& value)
 }
 void ANXPlayerCharacter::StartCrouch(const FInputActionValue& value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Crouch!"));
+	if (value.Get<bool>() && CanCrouch())
+	{
+		Crouch();
+		GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+
+		UE_LOG(LogTemp, Warning, TEXT("Crouching !"));
+	}
 }
 
 void ANXPlayerCharacter::StopCrouch(const FInputActionValue& value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Crouch stop!"));
+	if (!value.Get<bool>())
+	{
+		UnCrouch();
+		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+
+		UE_LOG(LogTemp, Warning, TEXT("Stand Up! !"));
+	}
+}
+
+bool ANXPlayerCharacter::GetIsCrouching() const
+{
+	return bIsCrouched;
 }
 
 void ANXPlayerCharacter::StartReload(const FInputActionValue& value)
