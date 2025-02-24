@@ -9,7 +9,9 @@ ANXPlayerController::ANXPlayerController()
 	SprintAction(nullptr),
 	AttackAction(nullptr),
 	CrouchAction(nullptr),
-	ReloadAction(nullptr)
+	ReloadAction(nullptr),
+	QuickSlot01(nullptr),
+	QuickSlot02(nullptr)
 {
 }
 

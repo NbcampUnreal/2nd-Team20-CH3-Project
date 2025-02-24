@@ -1,9 +1,11 @@
 #include "Player/NXPlayerCharacter.h"
 #include "Player/NXPlayerController.h"
+#include "Player/NXWeaponRifle.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
 
 ANXPlayerCharacter::ANXPlayerCharacter()
 {
@@ -146,6 +148,27 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					&ANXPlayerCharacter::StopReload
 				);
 			}
+
+			if (PlayerContorller->QuickSlot01)
+			{
+				EnhancedInput->BindAction(
+					PlayerContorller->QuickSlot01,
+					ETriggerEvent::Started,
+					this,
+					&ThisClass::InputQuickSlot01
+				);
+			}
+
+			if (PlayerContorller->QuickSlot02)
+			{
+				EnhancedInput->BindAction(
+					PlayerContorller->QuickSlot02,
+					ETriggerEvent::Started,
+					this,
+					&ThisClass::InputQuickSlot02
+				);
+			}
+			
 		}
 	}
 }
@@ -256,4 +279,26 @@ void ANXPlayerCharacter::StartReload(const FInputActionValue& value)
 void ANXPlayerCharacter::StopReload(const FInputActionValue& value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Reload stop!"));
+}
+
+void ANXPlayerCharacter::InputQuickSlot01(const FInputActionValue& InValue)
+{
+	FName WeaponSocket(TEXT("WeaponSocket"));
+	if (GetMesh()->DoesSocketExist(WeaponSocket) == true && IsValid(WeaponInstance) == false)  
+	{
+		WeaponInstance = GetWorld()->SpawnActor<ANXWeaponRifle>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator);
+		if (IsValid(WeaponInstance) == true)  
+		{
+			WeaponInstance->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
+		}
+	}
+}
+
+void ANXPlayerCharacter::InputQuickSlot02(const FInputActionValue& Invalue)
+{
+	if (IsValid(WeaponInstance)== true)
+	{
+		WeaponInstance->Destroy();
+		WeaponInstance = nullptr;
+	}
 }

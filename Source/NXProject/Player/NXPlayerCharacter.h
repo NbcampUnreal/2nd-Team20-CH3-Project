@@ -6,6 +6,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class ANXWeaponRifle;
 struct FInputActionValue;
 
 UCLASS()
@@ -16,6 +17,7 @@ class NXPROJECT_API ANXPlayerCharacter : public ANXCharacterBase
 public:
 	ANXPlayerCharacter();
 
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -25,9 +27,21 @@ protected:
 	UCameraComponent* CameraComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float NormalSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float SprintSpeedMultiplier;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	float SprintSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float CrouchSpeedMultiplier;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
 	float CrouchSpeed;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TSubclassOf<ANXWeaponRifle> WeaponClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<ANXWeaponRifle> WeaponInstance;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
     bool GetIsCrouching() const;
@@ -73,4 +87,11 @@ protected:
 	UFUNCTION()
 	void StopReload(const FInputActionValue& value);
 
+	UFUNCTION()
+	void InputQuickSlot01(const FInputActionValue& InValue);
+
+	UFUNCTION()
+	void InputQuickSlot02(const FInputActionValue& InValue);
+
+	
 };
