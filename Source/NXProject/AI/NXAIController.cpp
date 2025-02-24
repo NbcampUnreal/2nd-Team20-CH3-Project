@@ -4,9 +4,9 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "AI/NXNonPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-const float ANXAIController::PatrolRadius(2000.f);
 int32 ANXAIController::ShowAIDebug(0);
 const FName ANXAIController::StartPatrolPositionKey(TEXT("StartPatrolPosition"));
 const FName ANXAIController::EndPatrolPositionKey(TEXT("EndPatrolPosition"));
@@ -51,6 +51,12 @@ void ANXAIController::BeginAI(APawn* InPawn)
 			
 			// 시작 순찰 위치 세팅 
 			BlackboardComponent->SetValueAsVector(StartPatrolPositionKey, InPawn->GetActorLocation());
+
+			// PatrolRadius 받아오기
+			ANXNonPlayerCharacter* NPC = Cast<ANXNonPlayerCharacter>(InPawn);
+			checkf(NPC != nullptr, TEXT("InPawn is not of type ANXNonPlayerCharacter"));
+
+			float PatrolRadius = NPC->GetPatrolRadius();
 
 			if (ShowAIDebug == 1)
 			{

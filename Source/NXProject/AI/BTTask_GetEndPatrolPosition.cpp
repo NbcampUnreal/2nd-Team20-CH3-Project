@@ -33,7 +33,9 @@ EBTNodeResult::Type UBTTask_GetEndPatrolPosition::ExecuteTask(UBehaviorTreeCompo
 	// ¼øÂû ³¡ ÁöÁ¡
 	FNavLocation EndPatrolLocation;
 
-	if (true == NavigationSystem->GetRandomPointInNavigableRadius(StartPatrolPosition, AIController->PatrolRadius, EndPatrolLocation))
+	float PatrolRadius = NPC->GetPatrolRadius();
+
+	if (true == NavigationSystem->GetRandomPointInNavigableRadius(StartPatrolPosition, PatrolRadius, EndPatrolLocation))
 	{
 		OwnerComp.GetBlackboardComponent()->SetValueAsVector(ANXAIController::EndPatrolPositionKey, EndPatrolLocation.Location);
 		return Result = EBTNodeResult::Succeeded;

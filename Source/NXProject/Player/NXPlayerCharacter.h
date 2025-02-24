@@ -16,8 +16,6 @@ class NXPROJECT_API ANXPlayerCharacter : public ANXCharacterBase
 public:
 	ANXPlayerCharacter();
 
-	
-
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -25,13 +23,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComp;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float NormalSpeed;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float SprintSpeedMultiplier;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	float SprintSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float CrouchSpeedMultiplier;
@@ -82,5 +73,4 @@ protected:
 	UFUNCTION()
 	void StopReload(const FInputActionValue& value);
 
-	
 };

@@ -28,5 +28,22 @@ protected:
 	TObjectPtr<UAnimMontage> AttackMontage;
 
 	FOnAttackMontageEnded OnAttackMontageEndedDelegate;
-	
+
+private:
+
+	// -- Controller, Service -- 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Patrol", meta = (AllowPrivateAccess = "true"))
+	float PatrolRadius;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Patrol", meta = (AllowPrivateAccess = "true"))
+	float DetectRadius;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack", meta = (AllowPrivateAccess = "true"))
+	float AttackRange;
+
+
+public:
+	// -- private Getter ÇÔ¼ö --
+	float GetPatrolRadius() const;
+	float GetDetectRadius() const;
+	float GetAttackRange() const;
 };
+

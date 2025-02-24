@@ -2,6 +2,13 @@
 
 
 ANXCharacterBase::ANXCharacterBase()
+	: NormalSpeeds(600.f)
+	, SprintSpeedMultipliers(1.5f)
+	, SprintSpeeds(NormalSpeeds * SprintSpeedMultipliers)
+	, MaxHealth(100.f)
+	, CurrentHealth(MaxHealth)
+	, AttackDamage(10.f)
+	, AttackDelay(1.f)
 {
  	
 	PrimaryActorTick.bCanEverTick = false;
@@ -26,5 +33,68 @@ void ANXCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+
+void ANXCharacterBase::Die()
+{
+
+	/*UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathAnimation)
+	{
+		AnimInstance->Montage_Play(DeathAnimation);
+	}*/
+
+	UE_LOG(LogTemp, Warning, TEXT("AI, Character separate Die Log"));
+	// 물리적 충돌 비활성화 
+	SetActorEnableCollision(false);
+	Destroy();
+}
+
+// Getter 함수들
+float ANXCharacterBase::GetNormalSpeed() const
+{
+	return NormalSpeeds;
+}
+
+float ANXCharacterBase::GetSprintSpeedMultiplier() const
+{
+	return SprintSpeedMultipliers;
+}
+
+float ANXCharacterBase::GetSprintSpeed() const
+{
+	return SprintSpeeds;
+}
+
+float ANXCharacterBase::GetMaxHealth() const
+{
+	return MaxHealth;
+}
+
+float ANXCharacterBase::GetCurrentHealth() const
+{
+	return CurrentHealth;
+}
+
+float ANXCharacterBase::GetAttackDamage() const
+{
+	return AttackDamage;
+}
+
+float ANXCharacterBase::GetAttackDelay() const
+{
+	return AttackDelay;
+}
+
+float ANXCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	CurrentHealth -= DamageAmount;
+
+	if (CurrentHealth <= 0.f)
+	{
+		Die();  
+	}
+	return DamageAmount;
 }
 

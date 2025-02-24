@@ -29,12 +29,16 @@ void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerCom
 			{
 				// NPC의 현재 위치
 				FVector CenterPosition = NPC->GetActorLocation();
+				
 				// 탐지 범위
-				float DetectRadius = 300.f;
+				float DetectRadius = NPC->GetDetectRadius();  
+
 				TArray<FOverlapResult> OverlapResults;
+
 				// NPC를 무시하는 충돌 쿼리
 				FCollisionQueryParams CollisionQueryParams(NAME_None, false, NPC);
-				// 지정된 범위 내에서 충돌하는 모든 액터 ㅊㅈ기
+
+				// 지정된 범위 내에서 충돌하는 모든 액터
 				bool bResult = World->OverlapMultiByChannel(
 					OverlapResults,
 					CenterPosition,

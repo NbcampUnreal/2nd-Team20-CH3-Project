@@ -4,8 +4,6 @@
 #include "Player/NXCharacterBase.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-const float UBTDecorator_IsInAttackRange::AttackRange(200.f);
-
 UBTDecorator_IsInAttackRange::UBTDecorator_IsInAttackRange()
 {
 	NodeName = TEXT("IsInAttackRange");
@@ -23,6 +21,9 @@ bool UBTDecorator_IsInAttackRange::CalculateRawConditionValue(UBehaviorTreeCompo
 	// AIController가 소유하는 NPC가져오기
 	ANXNonPlayerCharacter* NPC = Cast<ANXNonPlayerCharacter>(AIController->GetPawn());
 	checkf(IsValid(NPC) == true, TEXT("Invalid NPC."));
+
+	// AttackRange 가져오기
+	float AttackRange = NPC->GetAttackRange();
 
 	// Blackboard에서 목표 PlyaerCharacter 가져오기 -> 이값은 AIController에서 정의된 키를 통해 접근.
 	ANXCharacterBase* TargetPlayerCharacter = Cast<ANXCharacterBase>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(ANXAIController::TargetCharacterKey));

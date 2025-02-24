@@ -22,10 +22,11 @@ ANXPlayerCharacter::ANXPlayerCharacter()
 
 	CameraComp->bUsePawnControlRotation = false;
 
-	NormalSpeed = 600.0f;
-	SprintSpeedMultiplier = 1.5f;
+	float NormalSpeed = GetNormalSpeed();
+	float SprintSpeedMultiplier = GetSprintSpeedMultiplier();
+	float SprintSpeed = GetSprintSpeed();
 	CrouchSpeedMultiplier = 0.5f; // 걷기 속도의 50% (앉기 속도)
-	SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
+	//SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
 	CrouchSpeed = NormalSpeed * CrouchSpeedMultiplier;
 
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
@@ -197,7 +198,7 @@ void ANXPlayerCharacter::StartSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		GetCharacterMovement()->MaxWalkSpeed;
 		UE_LOG(LogTemp, Warning, TEXT("Sprint!"));
 	}
 }
@@ -206,7 +207,7 @@ void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+		GetCharacterMovement()->MaxWalkSpeed;
 		UE_LOG(LogTemp, Warning, TEXT("Sprint Stop!"));
 	}
 }
@@ -236,7 +237,7 @@ void ANXPlayerCharacter::StopCrouch(const FInputActionValue& value)
 	if (!value.Get<bool>())
 	{
 		UnCrouch();
-		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+		GetCharacterMovement()->MaxWalkSpeed;
 
 		UE_LOG(LogTemp, Warning, TEXT("Stand Up! !"));
 	}
