@@ -21,6 +21,8 @@ public:
 	virtual void BeginAttack();
 	virtual void EndAttack(UAnimMontage* InMontage, bool bInterruped);
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 	bool bIsNowAttacking;
 
 protected:
@@ -44,13 +46,11 @@ private:
 
 
 public:
-	// -- Getter --
 	float GetPatrolRadius() const;
 	float GetDetectRadius() const;
 	float GetAttackRange() const;
 	float GetSphereRadius() const;
 
-	// -- 피격 부위별 데미지 --
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")
 	float HeadShotDamage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")

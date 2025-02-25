@@ -46,12 +46,10 @@ void ANXCharacterBase::Die()
 	}*/
 
 	UE_LOG(LogTemp, Warning, TEXT("AI, Character separate Die Log"));
-	// 콜리전 해제 
 	SetActorEnableCollision(false);
 	Destroy();
 }
 
-// Getter �Լ���
 float ANXCharacterBase::GetNormalSpeed() const
 {
 	return NormalSpeeds;
@@ -85,6 +83,11 @@ float ANXCharacterBase::GetAttackDamage() const
 float ANXCharacterBase::GetAttackDelay() const
 {
 	return AttackDelay;
+}
+
+int32 ANXCharacterBase::GetAttackCount() const
+{
+	return AttackCount;
 }
 
 float ANXCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

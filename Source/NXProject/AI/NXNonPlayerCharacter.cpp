@@ -18,11 +18,10 @@ ANXNonPlayerCharacter::ANXNonPlayerCharacter()
 
 	AIControllerClass = ANXAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-    
-    // LineTrace를 감지
-    GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 }
+
 
 void ANXNonPlayerCharacter::BeginPlay()
 {
@@ -59,15 +58,14 @@ void ANXNonPlayerCharacter::BeginAttack()
             AnimInstance->Montage_SetEndDelegate(OnAttackMontageEndedDelegate, AttackMontage);
         }
 
-        // 공격 범위 내의 적을 찾기 위해 Line Trace 사용 -> Sphere Trace로 변경
-        FVector Start = GetActorLocation();  // 현재 캐릭터 위치
-        FVector End = Start + GetActorForwardVector() * AttackRange;  // 공격 범위 내 끝 지점
+        FVector Start = GetActorLocation();  
+        FVector End = Start + GetActorForwardVector() * AttackRange;  
 
         TArray<FHitResult> HitResults;
         FCollisionQueryParams CollisionParams;
-        CollisionParams.AddIgnoredActor(this);  // 자신을 무시하도록 추가
+        CollisionParams.AddIgnoredActor(this); 
 
-        // Sphere Trace로 충돌체 찾기
+       
         bool bHit = GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(SphereRadius), CollisionParams);
 
         if (bHit)
@@ -75,15 +73,15 @@ void ANXNonPlayerCharacter::BeginAttack()
             for (const FHitResult& HitResult : HitResults)
             {
                 ANXCharacterBase* TargetCharacter = Cast<ANXCharacterBase>(HitResult.GetActor());
-                if (TargetCharacter && TargetCharacter != this)  // 자신과 겹친 경우 제외
+                if (TargetCharacter && TargetCharacter != this) 
                 {
-                    // 공격 데미지
+                   
                     float DamageAmount = GetAttackDamage();
 
-                    // 데미지 이벤트 생성
+                    
                     FPointDamageEvent DamageEvent(DamageAmount, HitResult, HitResult.ImpactPoint - Start, nullptr);
 
-                    // 대상에게 데미지 전달
+                    
                     TargetCharacter->TakeDamage(DamageAmount, DamageEvent, GetController(), this);
 
                     UE_LOG(LogTemp, Warning, TEXT("AI Attack! Damage: %f"), DamageAmount);
@@ -95,6 +93,7 @@ void ANXNonPlayerCharacter::BeginAttack()
             UE_LOG(LogTemp, Warning, TEXT("Sphere Trace did not hit anything."));
         }
     }
+
 }
 
 void ANXNonPlayerCharacter::EndAttack(UAnimMontage* InMontage, bool bInterruped)
@@ -108,6 +107,29 @@ void ANXNonPlayerCharacter::EndAttack(UAnimMontage* InMontage, bool bInterruped)
         OnAttackMontageEndedDelegate.Unbind();
     }
 }
+
+float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	
+	float NewHealth = GetCurrentHealth() - ActualDamage;
+	NewHealth = FMath::Clamp(NewHealth, 0.0f, GetMaxHealth());
+
+	
+	UE_LOG(LogTemp, Warning, TEXT("Damage: %f, HP: %f"), ActualDamage, NewHealth);
+
+	if (NewHealth <= 0.0f)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Death!"));
+		Die();
+	}
+
+	return ActualDamage;
+}
+
+
 
 float ANXNonPlayerCharacter::GetPatrolRadius() const
 {

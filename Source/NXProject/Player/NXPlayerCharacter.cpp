@@ -1,16 +1,20 @@
 #include "Player/NXPlayerCharacter.h"
 #include "Player/NXPlayerController.h"
 #include "Player/NXWeaponRifle.h"
+#include "AI/NXNonPlayerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/DamageEvents.h"
+#include "GameFramework/Actor.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 ANXPlayerCharacter::ANXPlayerCharacter()
 {
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	
+
 	SpringArmComp->SetupAttachment(RootComponent);
 
 	SpringArmComp->TargetArmLength = 300.0f;
@@ -24,15 +28,41 @@ ANXPlayerCharacter::ANXPlayerCharacter()
 
 	CameraComp->bUsePawnControlRotation = false;
 
-	float NormalSpeed = GetNormalSpeed();
+
+
+
+
+    float NormalSpeed = GetNormalSpeed();
 	float SprintSpeedMultiplier = GetSprintSpeedMultiplier();
 	float SprintSpeed = GetSprintSpeed();
-	CrouchSpeedMultiplier = 0.5f; // 걷기 속도의 50% (앉기 속도)
+	CrouchSpeedMultiplier = 0.5f; 
 	CrouchSpeed = NormalSpeed * CrouchSpeedMultiplier;
 
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true; // 앉기 가능하도록 설정
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true; 
 
+}
+
+void ANXPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	float MaxHP = GetMaxHealth();
+	float CurrentHP = GetCurrentHealth();
+	float Damage = GetAttackDamage();
+	float Delay = GetAttackDelay();
+
+	UE_LOG(LogTemp, Warning, TEXT("Player Max Health: %f, Current Health: %f, Attack Damage: %f, Attack Delay: %f"),
+		MaxHP, CurrentHP, Damage, Delay);
+
+
+	WeaponActor = GetWorld()->SpawnActor<ANXWeaponRifle>(Weapon);
+	if (IsValid(WeaponActor))
+	{
+		FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+		WeaponActor->AttachToComponent(GetMesh(), TransformRules, TEXT("WeaponSocket"));
+		WeaponActor->SetOwner(this);
+	}
 }
 
 void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -52,7 +82,7 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					&ANXPlayerCharacter::Move
 				);
 			}
-			
+
 			if (PlayerContorller->JumpAction)
 			{
 				EnhancedInput->BindAction(
@@ -96,7 +126,7 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					&ANXPlayerCharacter::StopSprint
 				);
 			}
-			
+
 			if (PlayerContorller->CrouchAction)
 			{
 				EnhancedInput->BindAction(
@@ -113,6 +143,7 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					&ANXPlayerCharacter::StopCrouch
 				);
 			}
+
 			
 			if (PlayerContorller->AttackAction)
 			{
@@ -120,7 +151,7 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					PlayerContorller->AttackAction,
 					ETriggerEvent::Triggered,
 					this,
-					&ANXPlayerCharacter::StartAttack
+					&ANXPlayerCharacter::StartAttack 
 				);
 
 				EnhancedInput->BindAction(
@@ -129,22 +160,35 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					this,
 					&ANXPlayerCharacter::StopAttack
 				);
+
 			}
-			
+
+
+			if (PlayerContorller->PunchAction)
+			{
+				EnhancedInput->BindAction(
+					PlayerContorller->PunchAction,
+					ETriggerEvent::Triggered,
+					this,
+					&ANXPlayerCharacter::StartPunchAttack 
+				);
+
+				EnhancedInput->BindAction(
+					PlayerContorller->PunchAction,
+					ETriggerEvent::Completed,
+					this,
+					&ANXPlayerCharacter::StopPunchAttack
+				);
+
+			}
+				
 			if (PlayerContorller->ReloadAction)
 			{
 				EnhancedInput->BindAction(
 					PlayerContorller->ReloadAction,
 					ETriggerEvent::Triggered,
 					this,
-					&ANXPlayerCharacter::StartReload
-				);
-
-				EnhancedInput->BindAction(
-					PlayerContorller->ReloadAction,
-					ETriggerEvent::Completed,
-					this,
-					&ANXPlayerCharacter::StopReload
+					&ANXPlayerCharacter::Reload
 				);
 			}
 
@@ -168,6 +212,7 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 				);
 			}
 			
+		
 		}
 	}
 }
@@ -235,15 +280,98 @@ void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 	}
 }
 
-void ANXPlayerCharacter::StartAttack(const FInputActionValue& value)
+
+void ANXPlayerCharacter::StartPunchAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attack!"));
+	
+	FVector PlayerLocation = GetActorLocation();
+	FVector ForwardVector = GetActorForwardVector();
+
+	
+	TArray<AActor*> OverlappingActors;
+	UKismetSystemLibrary::SphereOverlapActors(
+		this,
+		PlayerLocation + (ForwardVector * (this->MeleeAttackRange * 0.5f)), 
+		this->MeleeAttackRange,
+		{ UEngineTypes::ConvertToObjectType(ECC_Pawn) },
+		ANXNonPlayerCharacter::StaticClass(),
+		TArray<AActor*>(),
+		OverlappingActors
+	);
+
+	
+	for (AActor* Actor : OverlappingActors)
+	{
+		ANXNonPlayerCharacter* Enemy = Cast<ANXNonPlayerCharacter>(Actor);
+		if (Enemy)
+		{
+			float DamageAmount = this->GetAttackDamage();
+
+			Enemy->TakeDamage(DamageAmount, FDamageEvent(), this->GetController(), this);
+			UE_LOG(LogTemp, Warning, TEXT("Damage: %f, Da: %s"), DamageAmount, *Enemy->GetName());
+		}
+	}
+
+	
+	DrawDebugSphere(GetWorld(), PlayerLocation + (ForwardVector * (this->MeleeAttackRange * 0.5f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);
+}
+
+void ANXPlayerCharacter::StopPunchAttack(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attack Stop!"));
+}
+
+void ANXPlayerCharacter::StartAttack()
+{
+	
+	FVector Start = CameraComp->GetComponentLocation();
+	FVector ForwardVector = CameraComp->GetForwardVector();
+	FVector End = Start + (ForwardVector * this->RangedAttackRange); 
+
+	
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this); 
+
+	
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
+
+	
+	DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 2.0f); 
+
+	if (bHit)
+	{
+		AActor* HitActor = HitResult.GetActor();
+		if (HitActor)
+		{
+			
+			ANXNonPlayerCharacter* Enemy = Cast<ANXNonPlayerCharacter>(HitActor);
+			if (Enemy)
+			{
+				float DamageAmount = this->GetAttackDamage();
+
+				FDamageEvent DamageEvent;
+				Enemy->TakeDamage(DamageAmount, DamageEvent,this-> GetController(), this);
+
+				UE_LOG(LogTemp, Warning, TEXT("Damage : %f, Target: %s"), DamageAmount, *Enemy->GetName());
+			}
+		}
+	}
 }
 
 void ANXPlayerCharacter::StopAttack(const FInputActionValue& value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Attack Stop!"));
 }
+
+void ANXPlayerCharacter::Fire(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Fire!"));
+
+	StartAttack();
+}
+
+
 void ANXPlayerCharacter::StartCrouch(const FInputActionValue& value)
 {
 	if (value.Get<bool>() && CanCrouch())
@@ -260,7 +388,7 @@ void ANXPlayerCharacter::StopCrouch(const FInputActionValue& value)
 	if (!value.Get<bool>())
 	{
 		UnCrouch();
-		GetCharacterMovement()->MaxWalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
 
 		UE_LOG(LogTemp, Warning, TEXT("Stand Up! !"));
 	}
@@ -271,23 +399,18 @@ bool ANXPlayerCharacter::GetIsCrouching() const
 	return bIsCrouched;
 }
 
-void ANXPlayerCharacter::StartReload(const FInputActionValue& value)
+void ANXPlayerCharacter::Reload(const FInputActionValue& value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Reload"));
-}
-
-void ANXPlayerCharacter::StopReload(const FInputActionValue& value)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Reload stop!"));
 }
 
 void ANXPlayerCharacter::InputQuickSlot01(const FInputActionValue& InValue)
 {
 	FName WeaponSocket(TEXT("WeaponSocket"));
-	if (GetMesh()->DoesSocketExist(WeaponSocket) == true && IsValid(WeaponInstance) == false)  
+	if (GetMesh()->DoesSocketExist(WeaponSocket) == true && IsValid(WeaponInstance) == false)
 	{
 		WeaponInstance = GetWorld()->SpawnActor<ANXWeaponRifle>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator);
-		if (IsValid(WeaponInstance) == true)  
+		if (IsValid(WeaponInstance) == true)
 		{
 			WeaponInstance->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
 		}
@@ -296,7 +419,7 @@ void ANXPlayerCharacter::InputQuickSlot01(const FInputActionValue& InValue)
 
 void ANXPlayerCharacter::InputQuickSlot02(const FInputActionValue& Invalue)
 {
-	if (IsValid(WeaponInstance)== true)
+	if (IsValid(WeaponInstance) == true)
 	{
 		WeaponInstance->Destroy();
 		WeaponInstance = nullptr;
