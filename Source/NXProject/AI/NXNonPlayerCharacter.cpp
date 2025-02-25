@@ -150,40 +150,40 @@ float ANXNonPlayerCharacter::GetSphereRadius() const
     return SphereRadius;
 }
 
-float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-    float Health = GetCurrentHealth();
-
-    const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-    if (PointDamageEvent)
-    {
-        FName HitBone = PointDamageEvent->HitInfo.BoneName;
-
-        if (HitBone == FName("head")) 
-        {
-            DamageAmount += HeadShotDamage; 
-        }
-        else if (HitBone == FName("torso")) 
-        {
-            DamageAmount += BodyShotDamage;
-        }
-        else if (HitBone == FName("leg")) 
-        {
-            DamageAmount += ArmLegDamage;
-        }
-        else if (HitBone == FName("leg"))
-        {
-            DamageAmount += ArmLegDamage;
-        }
-    }
-    Health -= DamageAmount;
-
-    if (Health <= 0.f)
-    {
-        Die();
-    }
-    return DamageAmount;
-}
+//float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+//{
+//    float Health = GetCurrentHealth();
+//
+//    const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+//    if (PointDamageEvent)
+//    {
+//        FName HitBone = PointDamageEvent->HitInfo.BoneName;
+//
+//        if (HitBone == FName("head")) 
+//        {
+//            DamageAmount += HeadShotDamage; 
+//        }
+//        else if (HitBone == FName("torso")) 
+//        {
+//            DamageAmount += BodyShotDamage;
+//        }
+//        else if (HitBone == FName("leg")) 
+//        {
+//            DamageAmount += ArmLegDamage;
+//        }
+//        else if (HitBone == FName("leg"))
+//        {
+//            DamageAmount += ArmLegDamage;
+//        }
+//    }
+//    Health -= DamageAmount;
+//
+//    if (Health <= 0.f)
+//    {
+//        Die();
+//    }
+//    return DamageAmount;
+//}
 
 
 

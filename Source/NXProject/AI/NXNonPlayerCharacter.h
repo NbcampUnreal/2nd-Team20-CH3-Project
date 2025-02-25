@@ -21,8 +21,6 @@ public:
 	virtual void BeginAttack();
 	virtual void EndAttack(UAnimMontage* InMontage, bool bInterruped);
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
 	bool bIsNowAttacking;
 
 protected:

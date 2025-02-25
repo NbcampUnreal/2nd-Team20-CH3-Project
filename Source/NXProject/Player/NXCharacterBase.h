@@ -53,7 +53,6 @@ public:
 	float GetAttackDamage() const;
 	float GetAttackDelay() const;
 
-	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	int32 GetAttackCount() const;
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
