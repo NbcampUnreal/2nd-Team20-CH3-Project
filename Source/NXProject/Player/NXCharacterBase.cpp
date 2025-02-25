@@ -46,12 +46,12 @@ void ANXCharacterBase::Die()
 	}*/
 
 	UE_LOG(LogTemp, Warning, TEXT("AI, Character separate Die Log"));
-	// ¹°¸®Àû Ãæµ¹ ºñÈ°¼ºÈ­ 
+	// ì½œë¦¬ì „ í•´ì œ 
 	SetActorEnableCollision(false);
 	Destroy();
 }
 
-// Getter ÇÔ¼öµé
+// Getter ï¿½Ô¼ï¿½ï¿½ï¿½
 float ANXCharacterBase::GetNormalSpeed() const
 {
 	return NormalSpeeds;
@@ -97,4 +97,3 @@ float ANXCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	}
 	return DamageAmount;
 }
-

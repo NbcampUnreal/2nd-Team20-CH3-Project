@@ -20,23 +20,23 @@ protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	// -- AI ½ÃÀÛ Á¾·á½Ã --
+	// -- AI ì‹œìž‘ ì¢…ë£Œ --
 	void BeginAI(APawn* InPawn);
 	void EndAI();
 
 public:
-	// -- Blackbord º¯¼ö --
-	// ¼øÂû ½ÃÀÛ À§Ä¡
+	// -- Blackbord í•¨ìˆ˜ --
+	// ìˆœì°° ì‹œìž‘
 	static const FName StartPatrolPositionKey;
-	// ¼øÂû Á¾·á À§Ä¡
+	// ìˆœì°° ì¢…ë£Œ
 	static const FName EndPatrolPositionKey;
-	// Ãß°Ý Å¸ÄÏ ÁöÁ¤
+	// ëª©í‘œ íƒ€ê²Ÿ
 	static const FName TargetCharacterKey;
 
-	// ¼øÂûÀ» ÇÒ ÀÏÁ¤ ½Ã°£ ¹Ýº¹À» À§ÇÑ Å¸ÀÌ¸Ó
+	// 
 	FTimerHandle PatrolTimerHandle = FTimerHandle();
 	
-	// µð¹ö±ë È°¼ºÈ­¿ë
+	// ë””ë²„ê·¸ ì¶œë ¥ìš©
 	static int32 ShowAIDebug;
 
 private:

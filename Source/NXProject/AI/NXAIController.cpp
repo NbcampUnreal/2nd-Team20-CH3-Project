@@ -44,15 +44,15 @@ void ANXAIController::BeginAI(APawn* InPawn)
 	UBlackboardComponent* BlackboardComponent = Cast<UBlackboardComponent>(Blackboard);
 	if (IsValid(BlackboardComponent) == true)
 	{
+		// BB ë°ì´í„° ì‚¬ìš©
 		if (UseBlackboard(BlackboardDataAsset, BlackboardComponent) == true)
 		{
+			// BT ì‹¤í–‰
 			bool bRunSucceeded = RunBehaviorTree(BehaviorTree);
 			checkf(bRunSucceeded == true, TEXT("Fail to run behavior tree."))
 			
-			// ½ÃÀÛ ¼øÂû À§Ä¡ ¼¼ÆÃ 
 			BlackboardComponent->SetValueAsVector(StartPatrolPositionKey, InPawn->GetActorLocation());
-
-			// PatrolRadius ¹Þ¾Æ¿À±â
+		
 			ANXNonPlayerCharacter* NPC = Cast<ANXNonPlayerCharacter>(InPawn);
 			checkf(NPC != nullptr, TEXT("InPawn is not of type ANXNonPlayerCharacter"));
 

@@ -23,7 +23,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	// -- ÀÌµ¿ ¼Óµµ --
+	// -- ì´ë™ ì†ë„ --
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
 	float NormalSpeeds;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
@@ -31,13 +31,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
 	float SprintSpeeds;
 
-	// -- Ã¼·Â --
+	// -- ì²´ë ¥ --
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
 	float MaxHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
 	float CurrentHealth;
 	
-	// -- °ø°İ -- 
+	// -- ê³µê²© -- 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack", meta = (AllowPrivateAccess = "true"))
 	float AttackDamage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack", meta = (AllowPrivateAccess = "true"))
@@ -52,11 +52,13 @@ public:
 	float GetCurrentHealth() const;
 	float GetAttackDamage() const;
 	float GetAttackDelay() const;
+
 	
-	// -- ÇÇÇØ Ã³¸® --
-	// ÇÇÇØ°ª, ÇÇÇØ ÀÌº¥Æ® °ü·Ã Á¤º¸(¹°¸®Àû, ÃÑ°İ ÇÇÇØ), ÇÇÇØ¸¦ °¡ÇÑ ÁÖÃ¼, ÇÇÇØ¸¦ °¡ÇÑ °´Ã¼ ¹«±â¸¦ ³ÖÁö ¾ÊÀ½.
+	// -- ë°ë¯¸ì§€ ì²˜ë¦¬ --
+	// ë°ë¯¸ì§€ ì–‘, ë°ë¯¸ì§€ ì´ë²¤íŠ¸, ì´ë²¤íŠ¸ë¥¼ ë°œìƒì‹œí‚¨ ì»¨íŠ¸ë¡¤ëŸ¬, ë°ë¯¸ì§€ë¥¼ ì…íŒ ì•¡í„°
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	// -- »ç¸Á Ã³¸® -- 
+	// -- ì‚¬ë§ ì²˜ë¦¬ --
 	virtual void Die();
+
 };

@@ -4,20 +4,24 @@
 #include "AI/NXAnimInstance.h"
 #include "Engine/DamageEvents.h"
 
-
-
 ANXNonPlayerCharacter::ANXNonPlayerCharacter()
-	: bIsNowAttacking(false)
-	, PatrolRadius(200)
-	, DetectRadius(100)
-	, AttackRange(50)
-
+    : bIsNowAttacking(false)
+    , PatrolRadius(200)
+    , DetectRadius(100)
+    , AttackRange(50)
+    , SphereRadius(100.f)
+    , HeadShotDamage(100.f)
+    , BodyShotDamage(50.f)
+    , ArmLegDamage(20.f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	AIControllerClass = ANXAIController::StaticClass();
-	// ∑π∫ßø° πËƒ°µ«∞≈≥™ ªı∑Œ ª˝º∫µ…Ω√ NXAIController ∫˘¿« ¿⁄µø ¡¯«‡
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+    
+    // LineTraceÎ•º Í∞êÏßÄ
+    GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
 }
 
 void ANXNonPlayerCharacter::BeginPlay()
@@ -31,81 +35,133 @@ void ANXNonPlayerCharacter::BeginPlay()
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.f, 480.f, 0.f);
-
-		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+		
+		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
 	}
 }
 
 void ANXNonPlayerCharacter::BeginAttack()
 {
-	UNXAnimInstance* AnimInstance = Cast<UNXAnimInstance>(GetMesh()->GetAnimInstance());
-	checkf(IsValid(AnimInstance) == true, TEXT("Invalid AnimInstnace"));
+    UNXAnimInstance* AnimInstance = Cast<UNXAnimInstance>(GetMesh()->GetAnimInstance());
+    checkf(IsValid(AnimInstance) == true, TEXT("Invalid AnimInstance"));
 
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 
-	if (IsValid(AnimInstance) == true && IsValid(AttackMontage) == true && AnimInstance->Montage_IsPlaying(AttackMontage) == false)
-	{
-		AnimInstance->Montage_Play(AttackMontage);
+    if (IsValid(AnimInstance) == true && IsValid(AttackMontage) == true && AnimInstance->Montage_IsPlaying(AttackMontage) == false)
+    {
+        AnimInstance->Montage_Play(AttackMontage);
 
-		bIsNowAttacking = true;
+        bIsNowAttacking = true;
 
-		if (OnAttackMontageEndedDelegate.IsBound() == false)
-		{
-			OnAttackMontageEndedDelegate.BindUObject(this, &ThisClass::EndAttack);
-			AnimInstance->Montage_SetEndDelegate(OnAttackMontageEndedDelegate, AttackMontage);
-		}
+        if (OnAttackMontageEndedDelegate.IsBound() == false)
+        {
+            OnAttackMontageEndedDelegate.BindUObject(this, &ThisClass::EndAttack);
+            AnimInstance->Montage_SetEndDelegate(OnAttackMontageEndedDelegate, AttackMontage);
+        }
 
-		// ??
-		TArray<AActor*> OverlappingActors;
-		GetOverlappingActors(OverlappingActors);  // π¸¿ß ≥ª¿« ƒ≥∏Ø≈ÕµÈ¿ª ∞°¡Æø»
+        // Í≥µÍ≤© Î≤îÏúÑ ÎÇ¥Ïùò Ï†ÅÏùÑ Ï∞æÍ∏∞ ÏúÑÌï¥ Line Trace ÏÇ¨Ïö© -> Sphere TraceÎ°ú Î≥ÄÍ≤Ω
+        FVector Start = GetActorLocation();  // ÌòÑÏû¨ Ï∫êÎ¶≠ÌÑ∞ ÏúÑÏπò
+        FVector End = Start + GetActorForwardVector() * AttackRange;  // Í≥µÍ≤© Î≤îÏúÑ ÎÇ¥ ÎÅù ÏßÄÏ†ê
 
-		for (AActor* Actor : OverlappingActors)
-		{
-			// π¸¿ß ≥ª¿« ¥ÎªÛ¿Ã ¿˚¿Ã∂Û∏È «««ÿ∏¶ ¿‘»˚
-			ANXCharacterBase* TargetCharacter = Cast<ANXCharacterBase>(Actor);
-			if (TargetCharacter && TargetCharacter != this)  // ¿⁄±‚ ¿⁄Ω≈¿∫ ¡¶ø‹
-			{
+        TArray<FHitResult> HitResults;
+        FCollisionQueryParams CollisionParams;
+        CollisionParams.AddIgnoredActor(this);  // ÏûêÏã†ÏùÑ Î¨¥ÏãúÌïòÎèÑÎ°ù Ï∂îÍ∞Ä
 
-				float DamageAmount = GetAttackDamage();  // ∞¯∞›¿⁄¿« ∞¯∞›∑¬
+        // Sphere TraceÎ°ú Ï∂©ÎèåÏ≤¥ Ï∞æÍ∏∞
+        bool bHit = GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(SphereRadius), CollisionParams);
 
-				// FPointDamageEvent ∞¥√º ª˝º∫
-                FHitResult HitResult;
-                FPointDamageEvent DamageEvent(DamageAmount, HitResult, FVector::ZeroVector, nullptr);
-				// «««ÿ∏¶ ¥ÎªÛø°∞‘ ¿¸¥ﬁ
-				TargetCharacter->TakeDamage(DamageAmount, DamageEvent, GetController(), this);
-			}
-		}
-	}
+        if (bHit)
+        {
+            for (const FHitResult& HitResult : HitResults)
+            {
+                ANXCharacterBase* TargetCharacter = Cast<ANXCharacterBase>(HitResult.GetActor());
+                if (TargetCharacter && TargetCharacter != this)  // ÏûêÏã†Í≥º Í≤πÏπú Í≤ΩÏö∞ Ï†úÏô∏
+                {
+                    // Í≥µÍ≤© Îç∞ÎØ∏ÏßÄ
+                    float DamageAmount = GetAttackDamage();
+
+                    // Îç∞ÎØ∏ÏßÄ Ïù¥Î≤§Ìä∏ ÏÉùÏÑ±
+                    FPointDamageEvent DamageEvent(DamageAmount, HitResult, HitResult.ImpactPoint - Start, nullptr);
+
+                    // ÎåÄÏÉÅÏóêÍ≤å Îç∞ÎØ∏ÏßÄ Ï†ÑÎã¨
+                    TargetCharacter->TakeDamage(DamageAmount, DamageEvent, GetController(), this);
+
+                    UE_LOG(LogTemp, Warning, TEXT("AI Attack! Damage: %f"), DamageAmount);
+                }
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Sphere Trace did not hit anything."));
+        }
+    }
 }
 
 void ANXNonPlayerCharacter::EndAttack(UAnimMontage* InMontage, bool bInterruped)
 {
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 
-	bIsNowAttacking = false;
+    bIsNowAttacking = false;
 
-	if (OnAttackMontageEndedDelegate.IsBound() == true)
-	{
-		OnAttackMontageEndedDelegate.Unbind();
-	}
+    if (OnAttackMontageEndedDelegate.IsBound() == true)
+    {
+        OnAttackMontageEndedDelegate.Unbind();
+    }
 }
 
 float ANXNonPlayerCharacter::GetPatrolRadius() const
 {
-	return PatrolRadius;
+    return PatrolRadius;
 }
 
 float ANXNonPlayerCharacter::GetDetectRadius() const
 {
-	return DetectRadius;
+    return DetectRadius;
 }
 float ANXNonPlayerCharacter::GetAttackRange() const
 {
-	return AttackRange;
+    return AttackRange;
 }
 
+float ANXNonPlayerCharacter::GetSphereRadius() const
+{
+    return SphereRadius;
+}
 
+float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+    float Health = GetCurrentHealth();
 
+    const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+    if (PointDamageEvent)
+    {
+        FName HitBone = PointDamageEvent->HitInfo.BoneName;
+
+        if (HitBone == FName("head")) 
+        {
+            DamageAmount += HeadShotDamage; 
+        }
+        else if (HitBone == FName("torso")) 
+        {
+            DamageAmount += BodyShotDamage;
+        }
+        else if (HitBone == FName("leg")) 
+        {
+            DamageAmount += ArmLegDamage;
+        }
+        else if (HitBone == FName("leg"))
+        {
+            DamageAmount += ArmLegDamage;
+        }
+    }
+    Health -= DamageAmount;
+
+    if (Health <= 0.f)
+    {
+        Die();
+    }
+    return DamageAmount;
+}
 
 
 

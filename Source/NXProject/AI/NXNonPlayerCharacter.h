@@ -39,11 +39,25 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack", meta = (AllowPrivateAccess = "true"))
 	float AttackRange;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack", meta = (AllowPrivateAccess = "true"))
+	float SphereRadius;
+
 
 public:
-	// -- private Getter �Լ� --
+	// -- Getter --
 	float GetPatrolRadius() const;
 	float GetDetectRadius() const;
 	float GetAttackRange() const;
+	float GetSphereRadius() const;
+
+	// -- 피격 부위별 데미지 --
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")
+	float HeadShotDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")
+	float BodyShotDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")
+	float ArmLegDamage;
+
+	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 };
 

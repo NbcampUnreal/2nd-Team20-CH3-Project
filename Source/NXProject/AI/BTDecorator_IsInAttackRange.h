@@ -13,7 +13,7 @@ public:
 	UBTDecorator_IsInAttackRange();
 
 protected:
-	// ¹üÀ§ ³»¿¡ ÀûÀÌ ÀÖ´ÂÁö È®ÀÎ
+	// ê³µê²© ë²”ìœ„ ë‚´ì— ìˆëŠ”ì§€ í™•ì¸(BTì—ì„œ ë°ì½”ë ˆì´í„°ê°€ ì‚¬ìš©ë˜ëŠ” ì¡°ê±´ ê³„ì‚°)
 	virtual bool CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const override;
 
 };

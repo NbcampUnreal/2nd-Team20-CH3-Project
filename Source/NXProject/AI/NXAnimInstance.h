@@ -4,7 +4,7 @@
 #include "Animation/AnimInstance.h"
 #include "NXAnimInstance.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCheckHit); // 델리게이트 자료형 정의
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCheckHit); 
 
 
 UCLASS()

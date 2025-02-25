@@ -5,7 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
+#include "Engine/DamageEvents.h"
 
 ANXPlayerCharacter::ANXPlayerCharacter()
 {
@@ -28,7 +28,6 @@ ANXPlayerCharacter::ANXPlayerCharacter()
 	float SprintSpeedMultiplier = GetSprintSpeedMultiplier();
 	float SprintSpeed = GetSprintSpeed();
 	CrouchSpeedMultiplier = 0.5f; // 걷기 속도의 50% (앉기 속도)
-	//SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
 	CrouchSpeed = NormalSpeed * CrouchSpeedMultiplier;
 
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
@@ -189,7 +188,7 @@ void ANXPlayerCharacter::Move(const FInputActionValue& value)
 		AddMovementInput(GetActorRightVector(), MoveInput.Y);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Move!"));
+	//UE_LOG(LogTemp, Warning, TEXT("Move!"));
 }
 
 void ANXPlayerCharacter::StartJump(const FInputActionValue& value)
@@ -221,7 +220,7 @@ void ANXPlayerCharacter::StartSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = GetSprintSpeed();
 		UE_LOG(LogTemp, Warning, TEXT("Sprint!"));
 	}
 }
@@ -230,8 +229,9 @@ void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement())
 	{
-		GetCharacterMovement()->MaxWalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
 		UE_LOG(LogTemp, Warning, TEXT("Sprint Stop!"));
+
 	}
 }
 

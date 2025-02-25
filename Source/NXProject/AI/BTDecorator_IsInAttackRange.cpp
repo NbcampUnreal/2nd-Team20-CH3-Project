@@ -3,6 +3,7 @@
 #include "AI/NXNonPlayerCharacter.h"
 #include "Player/NXCharacterBase.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UBTDecorator_IsInAttackRange::UBTDecorator_IsInAttackRange()
 {
@@ -14,25 +15,52 @@ bool UBTDecorator_IsInAttackRange::CalculateRawConditionValue(UBehaviorTreeCompo
 	bool bResult = Super::CalculateRawConditionValue(OwnerComp, NodeMemory);
 	checkf(bResult == true, TEXT("Super::CalculateRawConditionValue() function has returned false."));
 	
-	// Behavior TreeÀÇ AIController °¡Á®¿À±â
+	// Behavior Treeì˜ AIController ê°€ì ¸ì˜´
 	ANXAIController* AIController = Cast<ANXAIController>(OwnerComp.GetAIOwner());
 	checkf(IsValid(AIController) == true, TEXT("Invalid AIController."));
 
-	// AIController°¡ ¼ÒÀ¯ÇÏ´Â NPC°¡Á®¿À±â
+	// AIControllerê°€ ì†Œìœ í•˜ëŠ” NPC ê°€ì ¸ì˜´
 	ANXNonPlayerCharacter* NPC = Cast<ANXNonPlayerCharacter>(AIController->GetPawn());
 	checkf(IsValid(NPC) == true, TEXT("Invalid NPC."));
 
-	// AttackRange °¡Á®¿À±â
+	// AttackRange ê°€ì ¸ì˜´
 	float AttackRange = NPC->GetAttackRange();
 
-	// Blackboard¿¡¼­ ¸ñÇ¥ PlyaerCharacter °¡Á®¿À±â -> ÀÌ°ªÀº AIController¿¡¼­ Á¤ÀÇµÈ Å°¸¦ ÅëÇØ Á¢±Ù.
+	// Blackboardì—ì„œ ëª©í‘œë¡œ ì„¤ì •ëœ PlayerCharacterë¥¼ ê°€ì ¸ì˜´.
+	// AIControllerì˜ Blackboardì—ì„œ TargetCharacterKeyë¡œ ì €ì¥ëœ ê°ì²´ë¥¼ ê°€ì ¸ì˜´.
 	ANXCharacterBase* TargetPlayerCharacter = Cast<ANXCharacterBase>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(ANXAIController::TargetCharacterKey));
-	// ¸ñÇ¥ ÇÃ·¹ÀÌ¾î°¡ À¯È¿ÇÏ°í ÇÃ·¹ÀÌ¾î°¡ Á¶Á¾ÇÏ´Â Ä³¸¯ÅÍÀÏ °æ¿ì, NPC¿Í ÇÃ·¹ÀÌ¾î »çÀÌÀÇ °Å¸®¸¦ °è»ê.
-	// -> °Å¸®°¡ AttackRangeÀÌ¶ó¸é °ø°İ °¡´É »óÅÂ¶ó°í ÆÇ´Ü.
+	
+	// ëª©í‘œ ìºë¦­í„°ê°€ ìœ íš¨í•˜ê³ , í”Œë ˆì´ì–´ê°€ ì§ì ‘ ì¡°ì¢…í•˜ëŠ” ìºë¦­í„°ì¸ì§€ í™•ì¸.
+	// NPCì™€ ëª©í‘œ í”Œë ˆì´ì–´ ìºë¦­í„° ì‚¬ì´ì˜ ê±°ë¦¬ê°€ ê³µê²© ë²”ìœ„ ë‚´ì— ìˆìœ¼ë©´ trueë¥¼ ë°˜í™˜.
 	if (IsValid(TargetPlayerCharacter) == true && TargetPlayerCharacter->IsPlayerControlled() == true)
 	{
-		return NPC->GetDistanceTo(TargetPlayerCharacter) <= AttackRange;
-	}
+		bool bInRange = NPC->GetDistanceTo(TargetPlayerCharacter) <= AttackRange;
 
+		if (bInRange)
+		{
+			// ê³µê²© ë²”ìœ„ ë‚´ì— ìˆì„ ë•Œ ì´ë™ ì†ë„ë¥¼ ë¹ ë¥´ê²Œ ì„¤ì •
+			if (NPC->GetMovementComponent())
+			{
+				UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());
+				if (MovementComponent)
+				{
+					MovementComponent->MaxWalkSpeed = NPC->GetSprintSpeed();
+				}
+			}
+		}
+		else
+		{
+			// ê³µê²© ë²”ìœ„ ë°–ì— ìˆì„ ë•Œ ê¸°ë³¸ ì†ë„ë¡œ ë˜ëŒë¦¬ê¸°
+			if (NPC->GetMovementComponent())
+			{
+				UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());
+				if (MovementComponent)
+				{
+					MovementComponent->MaxWalkSpeed = NPC->GetNormalSpeed(); 
+				}
+			}
+		}
+		return bInRange;
+	}
 	return false;
 }
