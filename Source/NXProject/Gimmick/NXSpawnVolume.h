@@ -2,8 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "NXItemSpawnRow.h"       
 #include "NXSpawnVolume.generated.h"
+
+USTRUCT(BlueprintType)
+struct FNXItemSpawnData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<AActor> ItemClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0.0", ClampMax = "100.0"))
+    float SpawnChance = 33.33f;
+};
 
 class UBoxComponent;
 
@@ -15,20 +26,30 @@ class NXPROJECT_API ANXSpawnVolume : public AActor
 public:
     ANXSpawnVolume();
 
+    virtual void BeginPlay() override;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
     USceneComponent* Scene;
-    // 스폰 영역을 담당할 박스 컴포넌트
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
     UBoxComponent* SpawningBox;
-    // 스폰 볼륨 내부에서 무작위 좌표를 얻어오는 함수
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-    UDataTable* ItemDataTable;
+
+    // 스폰 가능한 아이템 목록
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+    TArray<FNXItemSpawnData> SpawnableItems;
+
+    // 현재 스폰된 아이템
+    UPROPERTY()
+    AActor* CurrentSpawnedItem;
 
     UFUNCTION(BlueprintCallable, Category = "Spawning")
     void SpawnRandomItem();
 
+    // 랜덤 위치 생성
+    UFUNCTION(BlueprintPure, Category = "Spawning")
     FVector GetRandomPointInVolume() const;
-    FNXItemSpawnRow* GetRandomItem() const;
-    void SpawnItem(TSubclassOf<AActor> ItemClass);
 
+private:
+    // 아이템 제거 함수
+    void DestroyItem();
 };

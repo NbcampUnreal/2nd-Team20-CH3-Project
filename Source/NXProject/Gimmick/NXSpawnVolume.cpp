@@ -3,40 +3,82 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
-// Sets default values
 ANXSpawnVolume::ANXSpawnVolume()
 {
     PrimaryActorTick.bCanEverTick = false;
 
-    // 박스 컴포넌트를 생성하고, 이 액터의 루트로 설정
+    // 씬 컴포넌트 생성
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
     SetRootComponent(Scene);
 
+    // 스포닝 박스 컴포넌트 생성 및 부착
     SpawningBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawningBox"));
     SpawningBox->SetupAttachment(Scene);
+}
 
-    ItemDataTable = nullptr;
+void ANXSpawnVolume::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // 초기 아이템 스폰
+    SpawnRandomItem();
 }
 
 void ANXSpawnVolume::SpawnRandomItem()
 {
-    if (FNXItemSpawnRow* SelectedRow = GetRandomItem())
+    // 먼저 이전 아이템 제거
+    DestroyItem();
+
+    // 스폰 가능한 아이템이 있는지 확인
+    if (SpawnableItems.Num() > 0)
     {
-        if (UClass* ActualClass = SelectedRow->ItemClass.Get())
+        // 전체 확률 합 계산
+        float TotalChance = 0.0f;
+        for (const FNXItemSpawnData& ItemData : SpawnableItems)
         {
-            SpawnItem(ActualClass);
+            TotalChance += ItemData.SpawnChance;
+        }
+
+        // 0 ~ 전체 확률 사이 랜덤 값 생성
+        float RandomValue = FMath::FRandRange(0.0f, TotalChance);
+        float AccumulatedChance = 0.0f;
+
+        for (const FNXItemSpawnData& ItemData : SpawnableItems)
+        {
+            AccumulatedChance += ItemData.SpawnChance;
+
+            // 랜덤 값이 누적 확률보다 작으면 해당 아이템 스폰
+            if (RandomValue <= AccumulatedChance)
+            {
+                if (ItemData.ItemClass)
+                {
+                    FVector SpawnLocation = GetRandomPointInVolume();
+
+                    // 아이템 스폰 및 CurrentSpawnedItem 업데이트
+                    CurrentSpawnedItem = GetWorld()->SpawnActor<AActor>(
+                        ItemData.ItemClass,
+                        SpawnLocation,
+                        FRotator::ZeroRotator
+                    );
+
+                    // 로그 출력
+                    UE_LOG(LogTemp, Warning, TEXT("Spawned Item: %s at Location: %s"),
+                        *ItemData.ItemClass->GetName(),
+                        *SpawnLocation.ToString());
+
+                    break; // 한 개의 아이템만 스폰
+                }
+            }
         }
     }
 }
 
 FVector ANXSpawnVolume::GetRandomPointInVolume() const
 {
-    // 1) 박스 컴포넌트의 스케일된 Extent, 즉 x/y/z 방향으로 반지름(절반 길이)을 구함
+    // 스포닝 박스의 익스텐트와 위치를 기반으로 랜덤 위치 생성
     FVector BoxExtent = SpawningBox->GetScaledBoxExtent();
-    // 2) 박스 중심 위치
     FVector BoxOrigin = SpawningBox->GetComponentLocation();
 
-    // 3) 각 축별로 -Extent ~ +Extent 범위의 무작위 값 생성
     return BoxOrigin + FVector(
         FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
         FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
@@ -44,52 +86,12 @@ FVector ANXSpawnVolume::GetRandomPointInVolume() const
     );
 }
 
-FNXItemSpawnRow* ANXSpawnVolume::GetRandomItem() const
+void ANXSpawnVolume::DestroyItem()
 {
-    if (!ItemDataTable) return nullptr;
-
-    // 1) 모든 Row(행) 가져오기
-    TArray<FNXItemSpawnRow*> AllRows;
-    static const FString ContextString(TEXT("ItemSpawnContext"));
-    ItemDataTable->GetAllRows(ContextString, AllRows);
-
-    if (AllRows.IsEmpty()) return nullptr;
-
-    // 2) 전체 확률 합 구하기
-    float TotalChance = 0.0f; // 초기화
-    for (const FNXItemSpawnRow* Row : AllRows) // AllRows 배열의 각 Row를 순회
+    // 이전에 스폰된 아이템이 유효하다면 제거
+    if (IsValid(CurrentSpawnedItem))
     {
-        if (Row) // Row가 유효한지 확인
-        {
-            TotalChance += Row->SpawnChance; // SpawnChance 값을 TotalChance에 더하기
-        }
+        CurrentSpawnedItem->Destroy();
+        CurrentSpawnedItem = nullptr;
     }
-
-
-    // 3) 0 ~ TotalChance 사이 랜덤 값
-    const float RandValue = FMath::FRandRange(0.0f, TotalChance);
-    float AccumulateChance = 0.0f;
-
-    // 4) 누적 확률로 아이템 선택
-    for (FNXItemSpawnRow* Row : AllRows)
-    {
-        AccumulateChance += Row->SpawnChance;
-        if (RandValue <= AccumulateChance)
-        {
-            return Row;
-        }
-    }
-
-    return nullptr;
-}
-
-void ANXSpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass)
-{
-    if (!ItemClass) return;
-
-    GetWorld()->SpawnActor<AActor>(
-        ItemClass,
-        GetRandomPointInVolume(),
-        FRotator::ZeroRotator
-    );
 }
