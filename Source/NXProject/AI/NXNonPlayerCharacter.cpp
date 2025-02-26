@@ -108,29 +108,6 @@ void ANXNonPlayerCharacter::EndAttack(UAnimMontage* InMontage, bool bInterruped)
     }
 }
 
-float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
-{
-	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	
-	float NewHealth = GetCurrentHealth() - ActualDamage;
-	NewHealth = FMath::Clamp(NewHealth, 0.0f, GetMaxHealth());
-
-	
-	UE_LOG(LogTemp, Warning, TEXT("Damage: %f, HP: %f"), ActualDamage, NewHealth);
-
-	if (NewHealth <= 0.0f)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Death!"));
-		Die();
-	}
-
-	return ActualDamage;
-}
-
-
-
 float ANXNonPlayerCharacter::GetPatrolRadius() const
 {
     return PatrolRadius;
@@ -150,40 +127,62 @@ float ANXNonPlayerCharacter::GetSphereRadius() const
     return SphereRadius;
 }
 
-//float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+    float Health = GetCurrentHealth();
+
+    const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+    if (PointDamageEvent)
+    {
+        FName HitBone = PointDamageEvent->HitInfo.BoneName;
+
+        if (HitBone == FName("head")) 
+        {
+            DamageAmount += HeadShotDamage; 
+        }
+        else if (HitBone == FName("torso")) 
+        {
+            DamageAmount += BodyShotDamage;
+        }
+        else if (HitBone == FName("Arm")) 
+        {
+            DamageAmount += ArmLegDamage;
+        }
+        else if (HitBone == FName("leg"))
+        {
+            DamageAmount += ArmLegDamage;
+        }
+    }
+    Health -= DamageAmount;
+
+    if (Health <= 0.f)
+    {
+        Die();
+    }
+    return DamageAmount;
+}
+
+//float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+//	AController* EventInstigator, AActor* DamageCauser)
 //{
-//    float Health = GetCurrentHealth();
+//	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 //
-//    const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-//    if (PointDamageEvent)
-//    {
-//        FName HitBone = PointDamageEvent->HitInfo.BoneName;
+//	
+//	float NewHealth = GetCurrentHealth() - ActualDamage;
+//	NewHealth = FMath::Clamp(NewHealth, 0.0f, GetMaxHealth());
 //
-//        if (HitBone == FName("head")) 
-//        {
-//            DamageAmount += HeadShotDamage; 
-//        }
-//        else if (HitBone == FName("torso")) 
-//        {
-//            DamageAmount += BodyShotDamage;
-//        }
-//        else if (HitBone == FName("leg")) 
-//        {
-//            DamageAmount += ArmLegDamage;
-//        }
-//        else if (HitBone == FName("leg"))
-//        {
-//            DamageAmount += ArmLegDamage;
-//        }
-//    }
-//    Health -= DamageAmount;
+//	
+//	UE_LOG(LogTemp, Warning, TEXT("Damage: %f, HP: %f"), ActualDamage, NewHealth);
 //
-//    if (Health <= 0.f)
-//    {
-//        Die();
-//    }
-//    return DamageAmount;
+//	if (NewHealth <= 0.0f)
+//	{
+//		UE_LOG(LogTemp, Error, TEXT("Death!"));
+//		Die();
+//	}
+//
+//	return ActualDamage;
 //}
+
 
 
 
