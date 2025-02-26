@@ -10,6 +10,7 @@
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
 
 ANXPlayerCharacter::ANXPlayerCharacter()
 {
@@ -283,7 +284,10 @@ void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 
 void ANXPlayerCharacter::StartPunchAttack()
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("🔹 StartPunchAttack() 호출됨"));
+
+	PlayMeleeAttackAnimation();
+
 	FVector PlayerLocation = GetActorLocation();
 	FVector ForwardVector = GetActorForwardVector();
 
@@ -291,40 +295,46 @@ void ANXPlayerCharacter::StartPunchAttack()
 	TArray<AActor*> OverlappingActors;
 	UKismetSystemLibrary::SphereOverlapActors(
 		this,
-		PlayerLocation + (ForwardVector * (this->MeleeAttackRange * 0.5f)), 
-		this->MeleeAttackRange,
+		PlayerLocation + (ForwardVector * (MeleeAttackRange * 0.5f)),
+		MeleeAttackRange,
 		{ UEngineTypes::ConvertToObjectType(ECC_Pawn) },
 		ANXNonPlayerCharacter::StaticClass(),
 		TArray<AActor*>(),
 		OverlappingActors
 	);
 
-	
 	for (AActor* Actor : OverlappingActors)
 	{
 		ANXNonPlayerCharacter* Enemy = Cast<ANXNonPlayerCharacter>(Actor);
 		if (Enemy)
 		{
-			float DamageAmount = this->GetAttackDamage();
+			float DamageAmount = MeleeDamage;
+			FDamageEvent DamageEvent;
 
-			Enemy->TakeDamage(DamageAmount, FDamageEvent(), this->GetController(), this);
-			UE_LOG(LogTemp, Warning, TEXT("Damage: %f, Da: %s"), DamageAmount, *Enemy->GetName());
+			Enemy->TakeDamage(DamageAmount, DamageEvent, GetController(), this);
+
+			UE_LOG(LogTemp, Warning, TEXT("근접 공격 성공! AI에게 %f의 데미지 적용"), DamageAmount);
 		}
 	}
 
-	
-	DrawDebugSphere(GetWorld(), PlayerLocation + (ForwardVector * (this->MeleeAttackRange * 0.5f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);
+	DrawDebugSphere(GetWorld(), PlayerLocation + (ForwardVector * (MeleeAttackRange * 0.5f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);
 }
 
 void ANXPlayerCharacter::StopPunchAttack(const FInputActionValue& value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attack Stop!"));
+	UE_LOG(LogTemp, Warning, TEXT("Punch Stop!"));
 }
 
 void ANXPlayerCharacter::StartAttack()
 {
-	
-	FVector Start = CameraComp->GetComponentLocation();
+	if (WeaponActor) 
+	{
+		WeaponActor->Fire();
+		
+	}
+
+
+	/*FVector Start = CameraComp->GetComponentLocation();
 	FVector ForwardVector = CameraComp->GetForwardVector();
 	FVector End = Start + (ForwardVector * this->RangedAttackRange); 
 
@@ -356,7 +366,7 @@ void ANXPlayerCharacter::StartAttack()
 				UE_LOG(LogTemp, Warning, TEXT("Damage : %f, Target: %s"), DamageAmount, *Enemy->GetName());
 			}
 		}
-	}
+	}*/
 }
 
 void ANXPlayerCharacter::StopAttack(const FInputActionValue& value)
@@ -425,3 +435,34 @@ void ANXPlayerCharacter::InputQuickSlot02(const FInputActionValue& Invalue)
 		WeaponInstance = nullptr;
 	}
 }
+
+void ANXPlayerCharacter::PlayMeleeAttackAnimation()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	
+	if (!IsValid(AnimInstance))
+	{
+		UE_LOG(LogTemp, Error, TEXT("AnimInstance가 유효하지 않음! 애니메이션 실행 불가"));
+		return;
+	}
+
+	
+	if (!IsValid(MeleeAttackMontage))
+	{
+		UE_LOG(LogTemp, Error, TEXT("MeleeAttackMontage가 설정되지 않음!"));
+		return;
+	}
+
+	
+	if (!AnimInstance->Montage_IsPlaying(MeleeAttackMontage))
+	{
+		AnimInstance->Montage_Play(MeleeAttackMontage);
+		UE_LOG(LogTemp, Warning, TEXT("근접 공격 애니메이션 실행됨!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("근접 공격 애니메이션 이미 실행 중"));
+	}
+}
+

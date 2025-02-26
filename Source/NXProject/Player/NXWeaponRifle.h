@@ -13,10 +13,10 @@ public:
 	
 	ANXWeaponRifle();
 
-	USkeletalMeshComponent* GetMesh() const
+	/*USkeletalMeshComponent* GetMesh() const
 	{
 		return Mesh;
-	}
+	}*/
 
 
 protected:

@@ -94,6 +94,11 @@ int32 ANXCharacterBase::GetAttackCount() const
 	return AttackCount;
 }
 
+void ANXCharacterBase::SetHealth(float NewHealth)
+{
+	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+}
+
 float ANXCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	CurrentHealth -= DamageAmount;

@@ -30,10 +30,23 @@ void ANXWeaponRifle::Fire()
 		AnimInstance->Montage_Play(FireMontage);
 	}
 
-	if (!IsValid(Bullet))
+	if (!IsValid(Bullet)) return;
+
+	FVector SpawnLocation = MuzzleOffset->GetComponentLocation();
+	FRotator SpawnRotation = MuzzleOffset->GetComponentRotation();
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+
+	ANX_Bullet* SpawnedBullet = GetWorld()->SpawnActor<ANX_Bullet>(Bullet, SpawnLocation, SpawnRotation, SpawnParams);
+	if (SpawnedBullet)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[총기 오류] 총알 클래스가 설정되지 않음"));
-		return;
+		UE_LOG(LogTemp, Warning, TEXT("총알 발사됨: %s"), *SpawnedBullet->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("총알 생성 실패!"));
 	}
 
 	AActor* WeaponOwner = GetOwner();
@@ -57,12 +70,5 @@ void ANXWeaponRifle::Fire()
 		return;
 	}
 
-	FVector SpawnLocation = MuzzleOffset->GetComponentLocation();
-	FRotator SpawnRotation = MuzzleOffset->GetComponentRotation();
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-
-	GetWorld()->SpawnActor<ANX_Bullet>(Bullet, SpawnLocation, SpawnRotation, SpawnParams);
-
-	UE_LOG(LogTemp, Warning, TEXT("[총 발사] 플레이어 %s가 총을 발사함"), *Player->GetName());
+	
 }

@@ -55,6 +55,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<ANXWeaponRifle> Weapon;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<class UAnimMontage> MeleeAttackMontage;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlayMeleeAttackAnimation();
+
+
 	UFUNCTION(Blueprintpure, Category = "Movement")
 	bool GetIsCrouching() const;
 
@@ -64,7 +71,7 @@ protected:
 	void Look(const FInputActionValue& value);
 	void StartSprint(const FInputActionValue& value);
 	void StopSprint(const FInputActionValue& value);
-	void StartAttack(); // 원거리
+	void StartAttack(); 
 	void StopAttack(const FInputActionValue& value);
 	void StartCrouch(const FInputActionValue& value);
 	void StopCrouch(const FInputActionValue& value);
@@ -72,7 +79,7 @@ protected:
 	void InputQuickSlot01(const FInputActionValue& InValue);
 	void InputQuickSlot02(const FInputActionValue& InValue);
 	void Fire(const FInputActionValue& value);
-	void StartPunchAttack(); // 근접
+	void StartPunchAttack(); 
 	void StopPunchAttack(const FInputActionValue& value);
 
 
