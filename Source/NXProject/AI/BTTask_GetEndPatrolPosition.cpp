@@ -27,10 +27,8 @@ EBTNodeResult::Type UBTTask_GetEndPatrolPosition::ExecuteTask(UBehaviorTreeCompo
 	UNavigationSystemV1* NavigationSystem = UNavigationSystemV1::GetNavigationSystem(NPC->GetWorld());
 	checkf(IsValid(NavigationSystem) == true, TEXT("Invalid NavigationSystem"));
 
-	// ���� ���� ��ġ->Blackboard���� ������
 	FVector StartPatrolPosition = OwnerComp.GetBlackboardComponent()->GetValueAsVector(ANXAIController::StartPatrolPositionKey);
 
-	// ���� �� ����
 	FNavLocation EndPatrolLocation;
 
 	float PatrolRadius = NPC->GetPatrolRadius();

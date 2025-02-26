@@ -27,24 +27,20 @@ void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerCom
             UWorld* World = NPC->GetWorld();
             if (IsValid(World) == true)
             {
-                // NPC 위치 탐색
                 FVector CenterPosition = NPC->GetActorLocation();
 
-                // 탐지 범위
                 float DetectRadius = NPC->GetDetectRadius();
 
                 TArray<FOverlapResult> OverlapResults;
 
-                // NPC 주변의 겹치는 영역 탐색.
                 FCollisionQueryParams CollisionQueryParams(NAME_None, false, NPC);
 
-                // 겹치는 대상이 있는지 확인
                 bool bResult = World->OverlapMultiByChannel(
                     OverlapResults,
                     CenterPosition,
-                    FQuat::Identity, // 회전 없음
-                    ECollisionChannel::ECC_GameTraceChannel2, // 해당 채널
-                    FCollisionShape::MakeSphere(DetectRadius), // 구 형태의 탐지 범위
+                    FQuat::Identity, 
+                    ECollisionChannel::ECC_GameTraceChannel2, 
+                    FCollisionShape::MakeSphere(DetectRadius), 
                     CollisionQueryParams
                 );
 
@@ -62,7 +58,6 @@ void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerCom
 
                             if (ANXAIController::ShowAIDebug == 1)
                             {
-                                // 디버깅 정보
                                 UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Detected!")));
                                 DrawDebugSphere(World, CenterPosition, DetectRadius, 16, FColor::Red, false, 0.5f);
                                 DrawDebugPoint(World, PC->GetActorLocation(), 10.f, FColor::Red, false, 0.5f);
@@ -72,10 +67,8 @@ void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerCom
                         }
                     }
 
-                    // 플레이어가 탐지된 경우 속도 변경
                     if (bPlayerDetected)
                     {
-                        // 이동 속도를 빠르게 설정
                         if (NPC->GetMovementComponent())
                         {
                             UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());
@@ -87,7 +80,6 @@ void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerCom
                     }
                     else
                     {
-                        // 플레이어가 탐지되지 않은 경우 기본 속도
                         if (NPC->GetMovementComponent())
                         {
                             UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());

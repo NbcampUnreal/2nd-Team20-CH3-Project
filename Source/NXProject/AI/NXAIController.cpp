@@ -44,10 +44,8 @@ void ANXAIController::BeginAI(APawn* InPawn)
 	UBlackboardComponent* BlackboardComponent = Cast<UBlackboardComponent>(Blackboard);
 	if (IsValid(BlackboardComponent) == true)
 	{
-		// BB 데이터 사용
 		if (UseBlackboard(BlackboardDataAsset, BlackboardComponent) == true)
 		{
-			// BT 실행
 			bool bRunSucceeded = RunBehaviorTree(BehaviorTree);
 			checkf(bRunSucceeded == true, TEXT("Fail to run behavior tree."))
 			

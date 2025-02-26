@@ -2,10 +2,14 @@
 #include "AI/NXAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI/NXAnimInstance.h"
+#include "Animation/AnimInstance.h"
 #include "Engine/DamageEvents.h"
+#include "Delegates/Delegate.h"
+
 
 ANXNonPlayerCharacter::ANXNonPlayerCharacter()
     : bIsNowAttacking(false)
+    , bIsKnockedBack(false)
     , PatrolRadius(200)
     , DetectRadius(100)
     , AttackRange(50)
@@ -127,14 +131,26 @@ float ANXNonPlayerCharacter::GetSphereRadius() const
     return SphereRadius;
 }
 
+AActor* ANXNonPlayerCharacter::GetDamageSource() const
+{
+    return DamageSource;
+}
+
 float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+    this->DamageSource = DamageCauser;
+    this->bIsKnockedBack = true;
+
     float Health = GetCurrentHealth();
 
     const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+    FVector HitDirection = FVector::ZeroVector;
+
     if (PointDamageEvent)
     {
         FName HitBone = PointDamageEvent->HitInfo.BoneName;
+        HitDirection = -PointDamageEvent->ShotDirection; // 피격 방향 설정 (공격 방향의 반대)
+
 
         if (HitBone == FName("head")) 
         {
@@ -155,11 +171,71 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
     }
     Health -= DamageAmount;
 
+    Health = FMath::Clamp(Health, 0.0f, GetMaxHealth()); // 0 이하 방지
+
+    SetHealth(Health);
+
+    UE_LOG(LogTemp, Warning, TEXT("[AI 피격] 데미지: %f, 적용 후 남은 체력: %f"), DamageAmount, Health);
+
+
     if (Health <= 0.f)
     {
+        UE_LOG(LogTemp, Error, TEXT(" AI 사망! 제거됩니다."));
         Die();
     }
+
+    if (DamageCauser)
+    {
+        FVector KnockBackDir = GetActorLocation() - DamageCauser->GetActorLocation();
+        KnockBackDir.Normalize();
+
+        float KnockBackStrength = 10000.f;  
+        ApplyKnockBack(KnockBackDir, KnockBackStrength);
+    }
     return DamageAmount;
+}
+
+void ANXNonPlayerCharacter::ApplyKnockBack(FVector Direction, float Strength)
+{
+    FVector KnockbackImpulse = Direction * Strength;
+
+    UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
+    if (RootComp)
+    {
+        //RootComp->AddImpulse(KnockbackImpulse, NAME_None, true);
+        LaunchCharacter(KnockbackImpulse, false, false);
+    }
+
+    UNXAnimInstance* AnimInstance = Cast<UNXAnimInstance>(GetMesh()->GetAnimInstance());
+    if (AnimInstance)
+    {
+        if (bIsNowAttacking)  
+        {
+            if (AnimInstance->Montage_IsPlaying(AttackMontage))
+            {
+                AnimInstance->Montage_Stop(0.2f, AttackMontage);
+            }
+        }
+
+        if (KnockBackMontage)
+        {
+            AnimInstance->Montage_Play(KnockBackMontage);
+            OnKnockBackMontageEndedDelegate.BindUFunction(this, FName("OnKnockBackMontageEnded"));
+            AnimInstance->OnMontageEnded.AddDynamic(this, &ANXNonPlayerCharacter::OnKnockBackMontageEnded);
+        }
+    }
+
+    bIsKnockedBack = true;
+}
+
+
+void ANXNonPlayerCharacter::OnKnockBackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+    if (Montage == KnockBackMontage)
+    {
+        bIsKnockedBack = false;
+
+    }
 }
 
 //float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
@@ -182,12 +258,3 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
 //
 //	return ActualDamage;
 //}
-
-
-
-
-
-
-
-
-

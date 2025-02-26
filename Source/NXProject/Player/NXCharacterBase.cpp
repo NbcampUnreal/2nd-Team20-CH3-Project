@@ -35,7 +35,6 @@ void ANXCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-
 void ANXCharacterBase::Die()
 {
 
@@ -73,6 +72,11 @@ float ANXCharacterBase::GetMaxHealth() const
 float ANXCharacterBase::GetCurrentHealth() const
 {
 	return CurrentHealth;
+}
+
+void ANXCharacterBase::SetHealth(float NewHealth)
+{
+	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
 }
 
 float ANXCharacterBase::GetAttackDamage() const
