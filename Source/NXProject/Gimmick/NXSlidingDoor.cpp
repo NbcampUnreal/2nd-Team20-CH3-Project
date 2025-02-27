@@ -157,6 +157,28 @@ void ANXSlidingDoor::CloseDoor()
 
 void ANXSlidingDoor::UpdateDoorMovement(float DeltaTime)
 {
+    // 열린 상태에서 대기 시간 관리
+    if (bIsDoorOpened && !bIsClosing)
+    {
+        OpenedTime += DeltaTime;
+
+        // 지정된 시간 경과 후 문 닫기 시작
+        if (OpenedTime >= DoorStayOpenDuration)
+        {
+            // 플레이어가 범위 밖에 있다면 문 닫기
+            if (!bPlayerInRange)
+            {
+                CloseDoor();
+                OpenedTime = 0.0f;
+            }
+            else
+            {
+                // 플레이어가 범위 내에 있다면 대기 시간 초기화
+                OpenedTime = 0.0f;
+            }
+        }
+    }
+
     // 열기 상태
     if (bIsOpening)
     {
@@ -174,16 +196,14 @@ void ANXSlidingDoor::UpdateDoorMovement(float DeltaTime)
             bIsOpening = false;
             bIsDoorOpened = true;
             CurrentTime = 0.0f;
-
             UE_LOG(LogTemp, Warning, TEXT("Door Fully Opened"));
         }
     }
     // 닫기 상태
-    // 닫기 상태
     else if (bIsClosing)
     {
         CurrentTime += DeltaTime;
-        float Alpha = FMath::Clamp(CurrentTime / CloseDuration, 0.0f, 1.0f);  // CloseDuration 사용 및 최대값 1.0f로 수정
+        float Alpha = FMath::Clamp(CurrentTime / CloseDuration, 0.0f, 1.0f);
 
         // 부드러운 보간(Lerp) 사용
         FVector NewLocation = FMath::Lerp(DoorMesh->GetRelativeLocation(), InitialLocation, Alpha);
@@ -195,7 +215,6 @@ void ANXSlidingDoor::UpdateDoorMovement(float DeltaTime)
             bIsClosing = false;
             bIsDoorOpened = false;
             CurrentTime = 0.0f;
-
             UE_LOG(LogTemp, Warning, TEXT("Door Fully Closed"));
         }
     }

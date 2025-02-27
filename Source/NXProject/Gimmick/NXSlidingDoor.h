@@ -41,6 +41,10 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|Settings")
     FVector SlideDirection = FVector(1.0f, 0.0f, 0.0f);  // 문이 열리는 방향
 
+    //추가
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|Settings")
+    float DoorStayOpenDuration = 3.0f;// 문이 열린 상태로 유지되는 시간
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|Settings")
     FVector InteractionBoxExtent = FVector(100.f, 100.f, 100.f);
 
@@ -58,6 +62,10 @@ private:
     // 위치 관련 변수
     FVector InitialLocation;
     float CurrentTime = 0.0f;
+
+    // 추가
+    float OpenedTime = 0.0f;  // 문이 열린 시간을 추적
+    bool bIsWaitingToClose = false;  // 문 닫기 대기 상태
 
     // 충돌 이벤트 함수
     UFUNCTION()
