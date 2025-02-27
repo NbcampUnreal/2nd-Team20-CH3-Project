@@ -6,9 +6,6 @@
 #include "UI/NXUIPlayerController.h"
 #include "NXUIPlayerController_Loading.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class NXPROJECT_API ANXUIPlayerController_Loading : public ANXUIPlayerController
 {

@@ -18,7 +18,9 @@ void UUW_TitleLayout::NativeConstruct()
 
 void UUW_TitleLayout::OnPlayButtonClicked()
 {
-	UGameplayStatics::OpenLevel(GetWorld(), TEXT("Example"));
+	//UGameplayStatics::OpenLevel(GetWorld(), TEXT("Example"));
+	UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("Loading")), true, FString(TEXT("NextLevel=Metro1")));
+	// NextLevel이 Key, Example가 Value임. 그럼 Loading 레벨에서는 NextLevel을 파싱해서 Example 값을 얻어내면 됨.
 }
 
 void UUW_TitleLayout::OnExitButtonClicked()
