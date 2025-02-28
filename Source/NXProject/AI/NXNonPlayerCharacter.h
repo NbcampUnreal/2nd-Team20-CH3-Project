@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Player/NXCharacterBase.h"
+#include "Engine/DamageEvents.h"  // FDamageEvent 헤더 추가
 #include "NXNonPlayerCharacter.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FOnAttackMontageEnded, UAnimMontage*, bool /*bInterrupted*/)

@@ -234,7 +234,7 @@ void ANXPlayerCharacter::Move(const FInputActionValue& value)
 		AddMovementInput(GetActorRightVector(), MoveInput.Y);
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("Move!"));
+	
 }
 
 void ANXPlayerCharacter::StartJump(const FInputActionValue& value)
@@ -332,41 +332,6 @@ void ANXPlayerCharacter::StartAttack()
 		WeaponActor->Fire();
 		
 	}
-
-
-	/*FVector Start = CameraComp->GetComponentLocation();
-	FVector ForwardVector = CameraComp->GetForwardVector();
-	FVector End = Start + (ForwardVector * this->RangedAttackRange); 
-
-	
-	FHitResult HitResult;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this); 
-
-	
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
-
-	
-	//DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 2.0f); 
-
-	if (bHit)
-	{
-		AActor* HitActor = HitResult.GetActor();
-		if (HitActor)
-		{
-			
-			ANXNonPlayerCharacter* Enemy = Cast<ANXNonPlayerCharacter>(HitActor);
-			if (Enemy)
-			{
-				float DamageAmount = this->GetAttackDamage();
-
-				FDamageEvent DamageEvent;
-				Enemy->TakeDamage(DamageAmount, DamageEvent,this-> GetController(), this);
-
-				UE_LOG(LogTemp, Warning, TEXT("Damage : %f, Target: %s"), DamageAmount, *Enemy->GetName());
-			}
-		}
-	}*/
 }
 
 void ANXPlayerCharacter::StopAttack(const FInputActionValue& value)
@@ -412,6 +377,7 @@ bool ANXPlayerCharacter::GetIsCrouching() const
 void ANXPlayerCharacter::Reload(const FInputActionValue& value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Reload"));
+	WeaponActor->Reload();
 }
 
 void ANXPlayerCharacter::InputQuickSlot01(const FInputActionValue& InValue)

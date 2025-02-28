@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "NXWeaponRifle.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAmmoChanged, int32, CurrentAmmo);
+
 UCLASS()
 class NXPROJECT_API ANXWeaponRifle : public AActor
 {
@@ -13,11 +15,6 @@ public:
 	
 	ANXWeaponRifle();
 
-	/*USkeletalMeshComponent* GetMesh() const
-	{
-		return Mesh;
-	}*/
-
 
 protected:
 
@@ -25,27 +22,48 @@ protected:
 	
 public:
 
-	// **총알 발사 함수**
+
 	void Fire();
+	void StartFiring();
+	void StopFiring();
+	void Reload();
+	bool CanFire() const;
+
+	UPROPERTY(BlueprintAssignable, Category = "Weapon")
+	FOnAmmoChanged OnAmmoChanged;
 
 private:
 
-	// **총의 Skeletal Mesh**
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	void FinishReload();
+	void ResetFire();
+	void UpdateAmmo(int32 NewAmmo);
+	void ContinuousFire();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh;
 
-	// **총구 위치를 나타내는 SceneComponent**
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneComponent> MuzzleOffset;
 
-	// **발사 애니메이션 몽타주**
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAnimMontage> FireMontage;
 
-	// **발사될 총알 클래스**
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
-	TSubclassOf<class ANX_Bullet> Bullet;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	int32 MaxAmmo;
 
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	int32 CurrentAmmo;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float ReloadTime;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float FireRate;
+
+	bool bIsReloading;
+	bool bCanFire;
+	bool bIsFiring;
+
+	FTimerHandle FireRateTimer;
+	FTimerHandle ReloadTimer;
 };
