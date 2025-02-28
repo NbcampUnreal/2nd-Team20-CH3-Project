@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Player/NXCharacterBase.h"
+#include "Components/WidgetComponent.h"
 #include "NXNonPlayerCharacter.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FOnAttackMontageEnded, UAnimMontage*, bool /*bInterrupted*/)
@@ -21,6 +22,7 @@ public:
 	virtual void BeginAttack();
 	virtual void EndAttack(UAnimMontage* InMontage, bool bInterruped);
 
+	UFUNCTION()
 	void OnKnockBackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void EndKnockBack();
 
@@ -57,6 +59,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack", meta = (AllowPrivateAccess = "true"))
 	AActor* DamageSource;
 
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	UWidgetComponent* HealthBarComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> HealthBarClass;
+
 public:
 	float GetPatrolRadius() const;
 	float GetDetectRadius() const;
@@ -71,6 +79,11 @@ public:
 	float BodyShotDamage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")
 	float ArmLegDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|GetDamage")
+	float KnockBackStrength;
+
+	void UpdateHealthBar();
 
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;	
 

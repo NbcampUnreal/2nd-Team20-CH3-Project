@@ -2,7 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Player/NXPlayerController.h" 
+#include "Blueprint/UserWidget.h"
 #include "NXCharacterBase.generated.h"
+
+
+class ANXPlayerChahracter;
 
 UCLASS()
 class NXPROJECT_API ANXCharacterBase : public ACharacter
@@ -25,7 +30,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetHealth(float NewHealth);
 
+
 private:
+
+	void UpdateHUD();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
 	float NormalSpeeds;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
@@ -48,18 +57,33 @@ private:
 
 public:
 	// -- Getter --
+	UFUNCTION(BlueprintCallable)
 	float GetNormalSpeed() const;
+
+	UFUNCTION(BlueprintCallable)
 	float GetSprintSpeedMultiplier() const;
+
+	UFUNCTION(BlueprintCallable)
 	float GetSprintSpeed() const;
+
+	UFUNCTION(BlueprintCallable)
 	float GetMaxHealth() const;
+
+	UFUNCTION(BlueprintCallable)
 	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintCallable)
 	float GetAttackDamage() const;
+
+	UFUNCTION(BlueprintCallable)
 	float GetAttackDelay() const;
 
+	UFUNCTION(BlueprintCallable)
 	int32 GetAttackCount() const;
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void Die();
+
 
 };

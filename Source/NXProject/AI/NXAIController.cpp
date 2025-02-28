@@ -6,6 +6,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/NXNonPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Blueprint/UserWidget.h" 
 
 int32 ANXAIController::ShowAIDebug(0);
 const FName ANXAIController::StartPatrolPositionKey(TEXT("StartPatrolPosition"));
@@ -29,7 +30,6 @@ void ANXAIController::BeginPlay()
 	{
 		BeginAI(ControlledPawn);
 	}
-
 }
 
 void ANXAIController::EndPlay(const EEndPlayReason::Type EndPlayReason)

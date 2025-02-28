@@ -5,7 +5,7 @@
 #include "Animation/AnimInstance.h"
 #include "Engine/DamageEvents.h"
 #include "Delegates/Delegate.h"
-
+#include "Components/ProgressBar.h" 
 
 ANXNonPlayerCharacter::ANXNonPlayerCharacter()
     : bIsNowAttacking(false)
@@ -17,6 +17,7 @@ ANXNonPlayerCharacter::ANXNonPlayerCharacter()
     , HeadShotDamage(100.f)
     , BodyShotDamage(50.f)
     , ArmLegDamage(20.f)
+    , KnockBackStrength(1000.f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -24,8 +25,16 @@ ANXNonPlayerCharacter::ANXNonPlayerCharacter()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-}
 
+    HealthBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+    HealthBarComponent->SetupAttachment(RootComponent);
+
+    HealthBarComponent->SetWidgetSpace(EWidgetSpace::World);
+
+    HealthBarComponent->SetDrawSize(FVector2D(200, 20));
+
+    HealthBarComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+}
 
 void ANXNonPlayerCharacter::BeginPlay()
 {
@@ -41,6 +50,32 @@ void ANXNonPlayerCharacter::BeginPlay()
 		
 		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
 	}
+
+    if (HealthBarComponent && HealthBarClass)
+    {
+        UUserWidget* HealthBarWidget = CreateWidget<UUserWidget>(GetWorld(), HealthBarClass);
+        if (HealthBarWidget)
+        {
+            HealthBarComponent->SetWidget(HealthBarWidget);
+        }
+    }
+}
+
+void ANXNonPlayerCharacter::UpdateHealthBar()
+{
+    if (HealthBarComponent)
+    {
+        UUserWidget* Widget = Cast<UUserWidget>(HealthBarComponent->GetWidget());
+        if (Widget)
+        {
+            UProgressBar* HealthBar = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("HealthBar")));
+            if (HealthBar)
+            {
+                float HealthPercent = GetCurrentHealth() / GetMaxHealth();
+                HealthBar->SetPercent(HealthPercent);
+            }
+        }
+    }
 }
 
 void ANXNonPlayerCharacter::BeginAttack()
@@ -149,8 +184,7 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
     if (PointDamageEvent)
     {
         FName HitBone = PointDamageEvent->HitInfo.BoneName;
-        HitDirection = -PointDamageEvent->ShotDirection; // 피격 방향 설정 (공격 방향의 반대)
-
+        HitDirection = -PointDamageEvent->ShotDirection; 
 
         if (HitBone == FName("head")) 
         {
@@ -171,9 +205,11 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
     }
     Health -= DamageAmount;
 
-    Health = FMath::Clamp(Health, 0.0f, GetMaxHealth()); // 0 이하 방지
+    Health = FMath::Clamp(Health, 0.0f, GetMaxHealth()); 
 
     SetHealth(Health);
+
+    UpdateHealthBar();
 
     UE_LOG(LogTemp, Warning, TEXT("[AI 피격] 데미지: %f, 적용 후 남은 체력: %f"), DamageAmount, Health);
 
@@ -189,7 +225,6 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
         FVector KnockBackDir = GetActorLocation() - DamageCauser->GetActorLocation();
         KnockBackDir.Normalize();
 
-        float KnockBackStrength = 10000.f;  
         ApplyKnockBack(KnockBackDir, KnockBackStrength);
     }
     return DamageAmount;
@@ -199,17 +234,17 @@ void ANXNonPlayerCharacter::ApplyKnockBack(FVector Direction, float Strength)
 {
     FVector KnockbackImpulse = Direction * Strength;
 
-    UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
-    if (RootComp)
-    {
-        //RootComp->AddImpulse(KnockbackImpulse, NAME_None, true);
-        LaunchCharacter(KnockbackImpulse, false, false);
-    }
+    GetCharacterMovement()->Velocity = FVector::ZeroVector;
+    
+    const float MaxKnockBackStrength = 800.f;
+    KnockbackImpulse = KnockbackImpulse.GetClampedToMaxSize(MaxKnockBackStrength);
+
+    LaunchCharacter(KnockbackImpulse, true, false); 
 
     UNXAnimInstance* AnimInstance = Cast<UNXAnimInstance>(GetMesh()->GetAnimInstance());
     if (AnimInstance)
     {
-        if (bIsNowAttacking)  
+        if (bIsNowAttacking)
         {
             if (AnimInstance->Montage_IsPlaying(AttackMontage))
             {
@@ -217,11 +252,20 @@ void ANXNonPlayerCharacter::ApplyKnockBack(FVector Direction, float Strength)
             }
         }
 
-        if (KnockBackMontage)
+        if (AnimInstance->Montage_IsPlaying(KnockBackMontage))
         {
-            AnimInstance->Montage_Play(KnockBackMontage);
-            OnKnockBackMontageEndedDelegate.BindUFunction(this, FName("OnKnockBackMontageEnded"));
-            AnimInstance->OnMontageEnded.AddDynamic(this, &ANXNonPlayerCharacter::OnKnockBackMontageEnded);
+            AnimInstance->Montage_Stop(0.1f, KnockBackMontage);
+        }
+
+        if (GetCharacterMovement()->IsMovingOnGround())
+        {
+            if (AnimInstance && KnockBackMontage)
+            {
+                AnimInstance->Montage_Play(KnockBackMontage);
+
+                AnimInstance->OnMontageEnded.RemoveDynamic(this, &ANXNonPlayerCharacter::OnKnockBackMontageEnded);
+                AnimInstance->OnMontageEnded.AddDynamic(this, &ANXNonPlayerCharacter::OnKnockBackMontageEnded);
+            }
         }
     }
 
@@ -229,6 +273,40 @@ void ANXNonPlayerCharacter::ApplyKnockBack(FVector Direction, float Strength)
 }
 
 
+//void ANXNonPlayerCharacter::ApplyKnockBack(FVector Direction, float Strength)
+//{
+//    FVector KnockbackImpulse = Direction * Strength;
+//
+//    UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent());
+//    if (RootComp)
+//    {
+//        //RootComp->AddImpulse(KnockbackImpulse, NAME_None, true);
+//        LaunchCharacter(KnockbackImpulse, false, false);
+//    }
+//
+//    UNXAnimInstance* AnimInstance = Cast<UNXAnimInstance>(GetMesh()->GetAnimInstance());
+//    if (AnimInstance)
+//    {
+//        if (bIsNowAttacking)  
+//        {
+//            if (AnimInstance->Montage_IsPlaying(AttackMontage))
+//            {
+//                AnimInstance->Montage_Stop(0.2f, AttackMontage);
+//            }
+//        }
+//
+//        if (KnockBackMontage)
+//        {
+//            AnimInstance->Montage_Play(KnockBackMontage);
+//            OnKnockBackMontageEndedDelegate.BindUFunction(this, FName("OnKnockBackMontageEnded"));
+//            AnimInstance->OnMontageEnded.AddDynamic(this, &ANXNonPlayerCharacter::OnKnockBackMontageEnded);
+//        }
+//    }
+//
+//    bIsKnockedBack = true;
+//}
+//
+//
 void ANXNonPlayerCharacter::OnKnockBackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
     if (Montage == KnockBackMontage)
