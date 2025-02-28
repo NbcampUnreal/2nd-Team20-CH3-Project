@@ -29,9 +29,7 @@ public:
 	static const FName TargetCharacterKey;
 
 	FTimerHandle PatrolTimerHandle = FTimerHandle();
-	
 	static int32 ShowAIDebug;
-
 private:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (AllowPrivateAccess))
