@@ -2,6 +2,10 @@
 #include "Player/NXPlayerController.h"
 #include "Player/NXWeaponRifle.h"
 #include "AI/NXNonPlayerCharacter.h"
+#include "Player/NXAmmoWidget.h" 
+#include "Blueprint/UserWidget.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/World.h" 
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -29,10 +33,6 @@ ANXPlayerCharacter::ANXPlayerCharacter()
 
 	CameraComp->bUsePawnControlRotation = false;
 
-
-
-
-
     float NormalSpeed = GetNormalSpeed();
 	float SprintSpeedMultiplier = GetSprintSpeedMultiplier();
 	float SprintSpeed = GetSprintSpeed();
@@ -56,6 +56,14 @@ void ANXPlayerCharacter::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("Player Max Health: %f, Current Health: %f, Attack Damage: %f, Attack Delay: %f"),
 		MaxHP, CurrentHP, Damage, Delay);
 
+	if (AmmoWidgetClass)
+	{
+		AmmoWidget = CreateWidget<UNXAmmoWidget>(GetWorld(), AmmoWidgetClass);
+		if (AmmoWidget)
+		{
+			AmmoWidget->AddToViewport();
+		}
+	}
 
 	WeaponActor = GetWorld()->SpawnActor<ANXWeaponRifle>(Weapon);
 	if (IsValid(WeaponActor))
@@ -63,7 +71,57 @@ void ANXPlayerCharacter::BeginPlay()
 		FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
 		WeaponActor->AttachToComponent(GetMesh(), TransformRules, TEXT("WeaponSocket"));
 		WeaponActor->SetOwner(this);
+		WeaponActor->OnAmmoChanged.AddDynamic(this, &ANXPlayerCharacter::UpdateAmmoUI);
 	}
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		CrosshairHUD = PC->GetHUD<ANXCrosshairHUD>();
+	}
+}
+
+void ANXPlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	float Speed = GetCharacterMovement()->Velocity.Size();
+	bool bIsAimingAtEnemy = CheckIfAimingAtEnemy();
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (ANXPlayerController* NXPC = Cast<ANXPlayerController>(PC))
+		{
+			if (CrosshairHUD)
+			{
+				CrosshairHUD->UpdateCrosshair(Speed, bIsAimingAtEnemy);
+			}
+		}
+	}
+}
+
+bool ANXPlayerCharacter::CheckIfAimingAtEnemy()
+{
+	if (!Controller || !CameraComp) return false;
+
+	FVector Start = CameraComp->GetComponentLocation();
+	FVector ForwardVector = CameraComp->GetForwardVector();
+	FVector End = Start + (ForwardVector * 5000.0f);  
+
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);  
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams))
+	{
+		ANXNonPlayerCharacter* HitEnemy = Cast<ANXNonPlayerCharacter>(HitResult.GetActor());
+
+		FColor LineColor = HitEnemy ? FColor::Red : FColor::Green;
+		DrawDebugLine(GetWorld(), Start, End, LineColor, false, 0.1f, 0, 2.0f);
+
+		return HitEnemy != nullptr; 
+	}
+
+	return false;
 }
 
 void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -145,7 +203,6 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 				);
 			}
 
-			
 			if (PlayerContorller->AttackAction)
 			{
 				EnhancedInput->BindAction(
@@ -163,7 +220,6 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 				);
 
 			}
-
 
 			if (PlayerContorller->PunchAction)
 			{
@@ -212,8 +268,6 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					&ThisClass::InputQuickSlot02
 				);
 			}
-			
-		
 		}
 	}
 }
@@ -233,8 +287,6 @@ void ANXPlayerCharacter::Move(const FInputActionValue& value)
 	{
 		AddMovementInput(GetActorRightVector(), MoveInput.Y);
 	}
-
-	
 }
 
 void ANXPlayerCharacter::StartJump(const FInputActionValue& value)
@@ -270,28 +322,23 @@ void ANXPlayerCharacter::StartSprint(const FInputActionValue& value)
 		UE_LOG(LogTemp, Warning, TEXT("Sprint!"));
 	}
 }
-
 void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
 		UE_LOG(LogTemp, Warning, TEXT("Sprint Stop!"));
-
 	}
 }
-
-
 void ANXPlayerCharacter::StartPunchAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("🔹 StartPunchAttack() 호출됨"));
+	UE_LOG(LogTemp, Warning, TEXT(" StartPunchAttack() 호출됨"));
 
 	PlayMeleeAttackAnimation();
 
 	FVector PlayerLocation = GetActorLocation();
 	FVector ForwardVector = GetActorForwardVector();
 
-	
 	TArray<AActor*> OverlappingActors;
 	UKismetSystemLibrary::SphereOverlapActors(
 		this,
@@ -316,7 +363,6 @@ void ANXPlayerCharacter::StartPunchAttack()
 			UE_LOG(LogTemp, Warning, TEXT("근접 공격 성공! AI에게 %f의 데미지 적용"), DamageAmount);
 		}
 	}
-
 	DrawDebugSphere(GetWorld(), PlayerLocation + (ForwardVector * (MeleeAttackRange * 0.5f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);
 }
 
@@ -330,7 +376,6 @@ void ANXPlayerCharacter::StartAttack()
 	if (WeaponActor) 
 	{
 		WeaponActor->Fire();
-		
 	}
 }
 
@@ -345,7 +390,6 @@ void ANXPlayerCharacter::Fire(const FInputActionValue& value)
 
 	StartAttack();
 }
-
 
 void ANXPlayerCharacter::StartCrouch(const FInputActionValue& value)
 {
@@ -377,7 +421,11 @@ bool ANXPlayerCharacter::GetIsCrouching() const
 void ANXPlayerCharacter::Reload(const FInputActionValue& value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Reload"));
+
+	ReloadAnimation();
+
 	WeaponActor->Reload();
+
 }
 
 void ANXPlayerCharacter::InputQuickSlot01(const FInputActionValue& InValue)
@@ -413,14 +461,12 @@ void ANXPlayerCharacter::PlayMeleeAttackAnimation()
 		return;
 	}
 
-	
 	if (!IsValid(MeleeAttackMontage))
 	{
 		UE_LOG(LogTemp, Error, TEXT("MeleeAttackMontage가 설정되지 않음!"));
 		return;
 	}
 
-	
 	if (!AnimInstance->Montage_IsPlaying(MeleeAttackMontage))
 	{
 		AnimInstance->Montage_Play(MeleeAttackMontage);
@@ -432,3 +478,39 @@ void ANXPlayerCharacter::PlayMeleeAttackAnimation()
 	}
 }
 
+void ANXPlayerCharacter::ReloadAnimation()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+
+	if (!IsValid(AnimInstance))
+	{
+		UE_LOG(LogTemp, Error, TEXT("AnimInstance가 유효하지 않음! 애니메이션 실행 불가"));
+		return;
+	}
+
+	if (!IsValid(ReloadMontage))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ReloadMontage가 설정되지 않음!"));
+		return;
+	}
+
+	if (!AnimInstance->Montage_IsPlaying(ReloadMontage))
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		UE_LOG(LogTemp, Warning, TEXT("재장전 애니메이션 실행됨!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("재장전 애니메이션 이미 실행 중"));
+	}
+}
+
+void ANXPlayerCharacter::UpdateAmmoUI(int32 CurrentAmmo)
+{
+	if (AmmoWidget && WeaponActor)
+	{
+		int32 MaxAmmo = WeaponActor->GetMaxAmmo();
+		AmmoWidget->UpdateAmmoDisplay(CurrentAmmo, MaxAmmo);
+	}
+}

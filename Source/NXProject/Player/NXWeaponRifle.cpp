@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
+#include "Engine/DamageEvents.h"
 
 ANXWeaponRifle::ANXWeaponRifle()
 {
@@ -34,6 +35,16 @@ void ANXWeaponRifle::BeginPlay()
     UpdateAmmo(CurrentAmmo);
 }
 
+int32 ANXWeaponRifle::GetMaxAmmo() const
+{
+    return MaxAmmo;
+}
+
+int32 ANXWeaponRifle::GetCurrentAmmo() const
+{
+    return CurrentAmmo;
+}
+
 void ANXWeaponRifle::Fire()
 {
     if (!CanFire()) return;
@@ -52,38 +63,38 @@ void ANXWeaponRifle::Fire()
     APlayerController* PlayerController = Cast<APlayerController>(GetOwner()->GetInstigatorController());
     if (!PlayerController) return;
 
-    FVector Start = MuzzleOffset->GetComponentLocation();
-    FVector ForwardVector = PlayerController->GetControlRotation().Vector();
-    FVector End = Start + (ForwardVector * 5000.0f);
+    FVector CameraLocation;
+    FRotator CameraRotation;
+    PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
-    //FVector Start = Mesh->GetSocketLocation(TEXT("MuzzleOffset")); 
-    //FVector RightDirection = Mesh->GetRightVector();; 
-    //FVector End = Start + (RightDirection * 5000.0f); 
-
+    FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * 5000.0f);
     FHitResult HitResult;
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(this);
     QueryParams.AddIgnoredActor(GetOwner());
 
-    if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams))
+    FVector TargetPoint = TraceEnd;
+
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, CameraLocation, TraceEnd, ECC_Visibility, QueryParams))
     {
-       
-        ANXNonPlayerCharacter* NXNonPlayerCharacter = Cast<ANXNonPlayerCharacter>(HitResult.GetActor());
-        if (NXNonPlayerCharacter)
+        TargetPoint = HitResult.ImpactPoint;
+    }
+
+    FVector MuzzleLocation = MuzzleOffset->GetComponentLocation();
+    FVector Direction = (TargetPoint - MuzzleLocation).GetSafeNormal();
+
+    DrawDebugLine(GetWorld(), MuzzleLocation, TargetPoint, FColor::Red, false, 1.0f, 0, 2.0f);
+
+    if (HitResult.GetActor())
+    {
+        ANXNonPlayerCharacter* Enemy = Cast<ANXNonPlayerCharacter>(HitResult.GetActor());
+        if (Enemy)
         {
-            FPointDamageEvent DamageEvent(10.0f, HitResult, ForwardVector, nullptr); 
-            NXNonPlayerCharacter->TakeDamage(10.0f, DamageEvent, PlayerController, this);
+            FPointDamageEvent DamageEvent(10.0f, HitResult, Direction, UDamageType::StaticClass());
+            Enemy->TakeDamage(10.0f, DamageEvent, PlayerController, this);
         }
-
-        
-        DrawDebugLine(GetWorld(), Start, HitResult.ImpactPoint, FColor::Red, false, 1.0f, 0, 2.0f);
-    }
-    else
-    {
-        DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 2.0f);
     }
 
-    
     bCanFire = false;
     GetWorld()->GetTimerManager().SetTimer(FireRateTimer, this, &ANXWeaponRifle::ResetFire, FireRate, false);
 
@@ -110,6 +121,7 @@ void ANXWeaponRifle::FinishReload()
 {
     CurrentAmmo = MaxAmmo;
     bIsReloading = false;
+    UpdateAmmo(CurrentAmmo);
 }
 
 void ANXWeaponRifle::ResetFire()

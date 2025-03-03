@@ -15,13 +15,11 @@ public:
 	
 	ANXWeaponRifle();
 
-
 protected:
 
 	virtual void BeginPlay() override;
 	
 public:
-
 
 	void Fire();
 	void StartFiring();
@@ -31,6 +29,13 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Weapon")
 	FOnAmmoChanged OnAmmoChanged;
+	
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	int32 GetMaxAmmo() const;
+
+	
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	int32 GetCurrentAmmo() const;
 
 private:
 
@@ -49,10 +54,10 @@ private:
 	TObjectPtr<class UAnimMontage> FireMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	int32 MaxAmmo;
+	int32 MaxAmmo = 30;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	int32 CurrentAmmo;
+	int32 CurrentAmmo = 30;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	float ReloadTime;
