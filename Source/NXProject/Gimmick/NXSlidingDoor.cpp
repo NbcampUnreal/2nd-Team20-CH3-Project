@@ -1,4 +1,3 @@
-// NXSlidingDoor.cpp
 #include "Gimmick/NXSlidingDoor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
