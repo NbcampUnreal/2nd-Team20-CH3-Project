@@ -9,7 +9,9 @@ ANXHealingItem::ANXHealingItem()
 }
 
 void ANXHealingItem::ActivateItem(AActor* Activator)
-{
+{   
+    Super::ActivateItem(Activator);
+
     ANXPlayerCharacter* PlayerCharacter = Cast<ANXPlayerCharacter>(Activator);
     if (PlayerCharacter)
     {
@@ -21,8 +23,7 @@ void ANXHealingItem::ActivateItem(AActor* Activator)
         PlayerCharacter->SetHealth(NewHealth);
 
         // 디버그 메시지 또는 UI 알림
-        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green,
-            FString::Printf(TEXT("Healed for %d HP"), HealAmount));
+        UE_LOG(LogTemp, Log, TEXT("Healed for %d HP"), static_cast<int32>(HealAmount));
 
         // 아이템 제거
         DestroyItem();

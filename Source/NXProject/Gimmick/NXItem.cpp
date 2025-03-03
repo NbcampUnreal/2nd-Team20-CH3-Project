@@ -1,7 +1,11 @@
 #include "Gimmick/NXItem.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Engine/Engine.h"
+#include "Player/NXPlayerCharacter.h"
+#include "TimerManager.h"
 
 ANXItem::ANXItem()
 {
@@ -30,10 +34,10 @@ void ANXItem::OnItemOverlap(
     const FHitResult& SweepResult)
 
 {
-    if (OtherActor && OtherActor->ActorHasTag("Player"))
+    ANXPlayerCharacter* PlayerCharacter = Cast<ANXPlayerCharacter>(OtherActor);
+    if (PlayerCharacter)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Overlap!!!")));
-        ActivateItem(OtherActor);
+        ActivateItem(PlayerCharacter);
     }
 }
 
@@ -48,7 +52,27 @@ void ANXItem::OnItemEndOverlap(
 
 void ANXItem::ActivateItem(AActor* Activator)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Overlap!!")));
+	UParticleSystemComponent* Particle = nullptr;
+
+	if (PickupParticle)
+	{
+		Particle = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			PickupParticle,
+			GetActorLocation(),
+			GetActorRotation(),
+			true
+		);
+	}
+
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			PickupSound,
+			GetActorLocation()
+		);
+	}
 }
 
 FName ANXItem::GetItemType() const

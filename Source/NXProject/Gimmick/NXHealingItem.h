@@ -14,6 +14,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Healing")
 	int32 HealAmount;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Effects")
+	USoundBase* HealingItemSound;
 
 	virtual void ActivateItem(AActor* Activator) override;
 };
