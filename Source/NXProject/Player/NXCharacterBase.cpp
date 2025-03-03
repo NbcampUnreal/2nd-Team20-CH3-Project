@@ -1,6 +1,8 @@
 #include "Player/NXCharacterBase.h"
 #include "Player/NXPlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ANXCharacterBase::ANXCharacterBase()
 	: NormalSpeeds(600.f)
@@ -10,10 +12,10 @@ ANXCharacterBase::ANXCharacterBase()
 	, CurrentHealth(MaxHealth)
 	, AttackDamage(10.f)
 	, AttackDelay(1.f)
+	, bIsDying(false)
 {
  	
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
 
@@ -56,29 +58,87 @@ void ANXCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void ANXCharacterBase::Die()
 {
-
-	/*UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && DeathAnimation)
+	if (bIsDying)  
 	{
-		AnimInstance->Montage_Play(DeathAnimation);
-	}*/
+		UE_LOG(LogTemp, Warning, TEXT("[Die] 이미 사망 처리 중, 중복 실행 방지"));
+		return;
+	}
+	bIsDying = true;  
 
-	UE_LOG(LogTemp, Warning, TEXT("AI, Character separate Die Log"));
+	UE_LOG(LogTemp, Error, TEXT("[Die] Die 함수 호출됨!"));
 
-	
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (PC)
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathMontage)
 	{
-		ANXPlayerController* NXPC = Cast<ANXPlayerController>(PC);
-		if (NXPC)
+		bool bPlayed = AnimInstance->Montage_Play(DeathMontage) > 0.0f;
+
+		if (!bPlayed)
 		{
-			NXPC->SetHUDVisibility(false); 
+			UE_LOG(LogTemp, Error, TEXT("Die(): Death Montage did not play!"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Death montage is playing!"));
+
+			//float MontageDuration = DeathMontage->GetPlayLength();
+			//GetWorldTimerManager().SetTimer(DeathTimerHandle, DeathDelegate, MontageDuration, false);
+
+			
+
+
+			OnDeathMontageEndedDelegate.BindUObject(this, &ANXCharacterBase::OnDeathMontageEnd);
+			AnimInstance->Montage_SetEndDelegate(OnDeathMontageEndedDelegate, DeathMontage);
+
+			UE_LOG(LogTemp, Warning, TEXT("DeathEnd!"));
 		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Die(): AnimInstance or DeathMontage is NULL!"));
+		OnDeathMontageEnd(nullptr, false);
+	}
 
-    SetActorEnableCollision(false);
-	Destroy();
+	TObjectPtr<AController> MyController = GetController();
+	if (MyController)
+	{
+		MyController->UnPossess();
+	}
+
+	if (APlayerController* PC = Cast<APlayerController>(MyController))
+	{
+		if (ANXPlayerController* NXPC = Cast<ANXPlayerController>(PC))
+		{
+			NXPC->SetHUDVisibility(false);
+		}
+	}
+	SetLifeSpan(3.0f);  
 }
+
+
+void ANXCharacterBase::OnDeathMontageEnd(UAnimMontage* Montage, bool bInterrupted)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnDeathMontageEnd called"));
+
+
+	if (Montage == DeathMontage)
+	{
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->DisableMovement();   
+			GetCharacterMovement()->StopMovementImmediately(); 
+		}
+
+		bIsDying = false;  
+
+		UE_LOG(LogTemp, Warning, TEXT("Death animation finished, destroying actor."));
+
+
+		UE_LOG(LogTemp, Warning, TEXT("Setting LifeSpan to 3.0f for actor."));
+		SetLifeSpan(3.0f);
+	}
+}
+
+
 
 float ANXCharacterBase::GetNormalSpeed() const
 {

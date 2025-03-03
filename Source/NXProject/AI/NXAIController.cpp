@@ -5,6 +5,7 @@
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/NXNonPlayerCharacter.h"
+#include "Player/NXPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Blueprint/UserWidget.h" 
 
@@ -20,6 +21,32 @@ ANXAIController::ANXAIController()
 	BrainComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BrainComponent"));
 
 }
+
+void ANXAIController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	ANXNonPlayerCharacter* AICharacter = Cast<ANXNonPlayerCharacter>(GetPawn());
+	ANXPlayerCharacter* Player = Cast<ANXPlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+
+	if (AICharacter && Player)
+	{
+		float DistanceToPlayer = FVector::Dist(AICharacter->GetActorLocation(), Player->GetActorLocation());
+
+		if (DistanceToPlayer < AICharacter->GetAttackRange())
+		{
+			AICharacter->BeginAttack();
+
+			GetBlackboardComponent()->SetValueAsBool(TEXT("IsInAttackRange"), true);
+		}
+		else
+		{
+			GetBlackboardComponent()->SetValueAsBool(TEXT("IsInAttackRange"), false);
+		}
+	}
+}
+
+
 
 void ANXAIController::BeginPlay()
 {

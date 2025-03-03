@@ -4,6 +4,9 @@
 #include "GameFramework/Character.h"
 #include "Player/NXPlayerController.h" 
 #include "Blueprint/UserWidget.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "TimerManager.h" 
 #include "NXCharacterBase.generated.h"
 
 
@@ -30,6 +33,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetHealth(float NewHealth);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	TObjectPtr<UAnimMontage> DeathMontage;
+
+	FOnMontageEnded OnDeathMontageEndedDelegate;
+
+	UFUNCTION()
+	void OnDeathMontageEnd(UAnimMontage* Montage, bool bInterrupted);
+
+	FTimerHandle DeathTimerHandle;
+	FTimerDelegate DeathDelegate;
+
+	//void DestroyCharacter();
 
 private:
 
@@ -54,6 +69,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Attack", meta = (AllowPrivateAccess = "true"))
 	int32 AttackCount;
+
+
 
 public:
 	// -- Getter --
@@ -85,5 +102,6 @@ public:
 
 	virtual void Die();
 
-
+	UPROPERTY(BlueprintReadWrite, Category = "Health")
+	bool bIsDying;
 };

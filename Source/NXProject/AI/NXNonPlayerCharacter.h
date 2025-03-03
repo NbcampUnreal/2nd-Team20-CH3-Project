@@ -18,6 +18,7 @@ public:
 	ANXNonPlayerCharacter();
 
 	virtual void BeginPlay() override;
+	/*virtual void Tick(float DeltaTime) override;*/
 
 	virtual void BeginAttack();
 	virtual void EndAttack(UAnimMontage* InMontage, bool bInterruped);
@@ -28,6 +29,17 @@ public:
 
 	bool bIsNowAttacking;
 	bool bIsKnockedBack;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	bool bIsInAttackRange;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Anim")
+	bool bIsChasing;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Anim")
+	bool bIsAttacking;
+
+	void OnCheckHit();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess))

@@ -18,5 +18,7 @@ protected:
 
 public:
 	FOnCheckHit OnCheckHit;
+
+
 	
 };
