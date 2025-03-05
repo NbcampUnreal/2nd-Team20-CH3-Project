@@ -17,7 +17,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// 컴포넌트 선언
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Portal|Components")
 	class USceneComponent* RootSceneComponent;
 
@@ -31,7 +30,6 @@ protected:
 	FName TargetLevelName = FName("Metro1");
 
 private:
-	// 충돌 이벤트 함수
 	UFUNCTION()
 	void OnPortalOverlapBegin(
 		UPrimitiveComponent* OverlappedComponent,
