@@ -4,6 +4,10 @@
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h" 
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "NXSlidingDoor.generated.h"
 
 UCLASS()
@@ -12,6 +16,18 @@ class NXPROJECT_API ANXSlidingDoor : public AActor
     GENERATED_BODY()
 public:
     ANXSlidingDoor();
+
+    UPROPERTY(EditAnywhere, Category = "Effects")
+    USoundBase* OpenSound;
+
+    UPROPERTY(EditAnywhere, Category = "Effects")
+    USoundBase* CloseSound;
+
+    UPROPERTY(EditAnywhere, Category = "Effects")
+    UNiagaraSystem* OpenEffect;
+
+    UPROPERTY(EditAnywhere, Category = "Effects")
+    UNiagaraSystem* CloseEffect;
 
 protected:
     virtual void BeginPlay() override;

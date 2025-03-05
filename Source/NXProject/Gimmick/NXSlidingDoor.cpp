@@ -115,6 +115,17 @@ void ANXSlidingDoor::OpenDoor()
             UE_LOG(LogTemp, Warning, TEXT("Door Open Animation"));
         }
 
+        if (OpenSound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, OpenSound, GetActorLocation());
+        }
+
+        if (OpenEffect)
+        {
+            UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, OpenEffect, GetActorLocation(), GetActorRotation());
+        }
+
+
         UE_LOG(LogTemp, Warning, TEXT("Door Opening"));
     }
 }
@@ -126,6 +137,16 @@ void ANXSlidingDoor::CloseDoor()
         bIsClosing = true;
         bIsOpening = false;
         CurrentTime = 0.0f;
+
+        if (CloseSound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, CloseSound, GetActorLocation());
+        }
+
+        if (CloseEffect)
+        {
+            UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CloseEffect, GetActorLocation(), GetActorRotation());
+        }
 
         UE_LOG(LogTemp, Warning, TEXT("Door Closing"));
     }
@@ -185,4 +206,7 @@ void ANXSlidingDoor::UpdateDoorMovement(float DeltaTime)
         }
     }
 }
+
+
+
 
