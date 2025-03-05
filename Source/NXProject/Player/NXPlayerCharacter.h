@@ -28,6 +28,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	ANXWeaponRifle* GetWeaponActor() { return WeaponActor; }
 
+	void OnCheckHit();
+
+	void ResetCanAttack();
+
 	virtual void Die();
 	
 	void OnDeathMontageEnd(UAnimMontage* Montage, bool bInterrupted);

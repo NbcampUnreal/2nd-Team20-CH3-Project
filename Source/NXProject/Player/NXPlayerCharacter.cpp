@@ -334,7 +334,13 @@ void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 
 void ANXPlayerCharacter::StartPunchAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT(" StartPunchAttack() 호출됨"));
+	UE_LOG(LogTemp, Warning, TEXT("StartPunchAttack 호출됨"));
+
+	PlayMeleeAttackAnimation();
+
+	OnCheckHit();
+
+	/*UE_LOG(LogTemp, Warning, TEXT(" StartPunchAttack() 호출됨"));
 
 	PlayMeleeAttackAnimation();
 
@@ -365,7 +371,7 @@ void ANXPlayerCharacter::StartPunchAttack()
 			UE_LOG(LogTemp, Warning, TEXT("근접 공격 성공! AI에게 %f의 데미지 적용"), DamageAmount);
 		}
 	}
-	DrawDebugSphere(GetWorld(), PlayerLocation + (ForwardVector * (MeleeAttackRange * 0.5f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);
+	DrawDebugSphere(GetWorld(), PlayerLocation + (ForwardVector * (MeleeAttackRange * 0.5f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);*/
 }
 
 void ANXPlayerCharacter::StopPunchAttack(const FInputActionValue& value)
@@ -503,6 +509,73 @@ void ANXPlayerCharacter::PlayMeleeAttackAnimation()
 	}
 }
 
+bool bCanAttack = true;
+
+void ANXPlayerCharacter::OnCheckHit()
+{
+	if (!bCanAttack) return;
+
+	FVector Start = GetActorLocation();
+	FVector End = Start + GetActorForwardVector() * MeleeAttackRange;
+
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this);
+
+	float SphereRadius = 50.0f;
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		Start,
+		End,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(SphereRadius),
+		CollisionParams
+	);
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* ActorHit = HitResult.GetActor();
+			if (ActorHit && ActorHit != this && ActorHit->IsA(ANXNonPlayerCharacter::StaticClass()))  
+			{
+				ANXNonPlayerCharacter* Enemy = Cast<ANXNonPlayerCharacter>(ActorHit);  
+
+				if (Enemy)
+				{
+					float DamageAmount = MeleeDamage;
+
+					FPointDamageEvent DamageEvent(DamageAmount, HitResult, HitResult.ImpactPoint - Start, nullptr); 
+
+					if (Enemy != Cast<ANXNonPlayerCharacter>(this))
+					{
+						Enemy->TakeDamage(DamageAmount, DamageEvent, GetController(), this);
+					}
+					
+					UE_LOG(LogTemp, Warning, TEXT("근접 공격 성공! AI에게 %f의 데미지 적용"), DamageAmount);
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("근접 공격 범위 내에 적이 없습니다."));
+	}
+
+	DrawDebugSphere(GetWorld(), Start + (GetActorForwardVector() + (MeleeAttackRange * 10.0f)), MeleeAttackRange, 12, FColor::Red, false, 1.0f);
+
+	bCanAttack = false;
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ANXPlayerCharacter::ResetCanAttack, 0.5f, false);
+}
+
+void ANXPlayerCharacter::ResetCanAttack()
+{
+	bCanAttack = true; 
+}
+		
 void ANXPlayerCharacter::ReloadAnimation()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
