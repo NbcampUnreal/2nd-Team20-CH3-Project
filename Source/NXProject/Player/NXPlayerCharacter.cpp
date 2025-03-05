@@ -272,6 +272,7 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
+
 void ANXPlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (!Controller) return;

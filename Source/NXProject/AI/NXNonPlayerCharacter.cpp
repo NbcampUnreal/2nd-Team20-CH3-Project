@@ -9,6 +9,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Player/NXPlayerCharacter.h"
 #include "Player/NXWeaponRifle.h"
+#include "Kismet/GameplayStatics.h"       
+#include "Particles/ParticleSystem.h"             
+
 
 ANXNonPlayerCharacter::ANXNonPlayerCharacter()
     : bIsNowAttacking(false)
@@ -281,6 +284,20 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
         FName HitBone = PointDamageEvent->HitInfo.BoneName;
         HitDirection = -PointDamageEvent->ShotDirection;
 
+        if (HitBone == FName("head") || HitBone == FName("torso") || HitBone == FName("Arm") || HitBone == FName("leg"))
+        {
+            if (DamageCauser->GetWorld())
+            {
+                FVector SpawnLocation = PointDamageEvent->HitInfo.ImpactPoint;
+                UParticleSystem* BloodEffect = LoadObject<UParticleSystem>(nullptr, TEXT("/Game/BSP_FPS_TPS_Particles/Particles/BulletImpact/PS_Bullet_Impact_Flesh_1.PS_Bullet_Impact_Flesh_1")); 
+
+                if (BloodEffect)
+                {
+                    UGameplayStatics::SpawnEmitterAtLocation(DamageCauser->GetWorld(), BloodEffect, SpawnLocation, FRotator::ZeroRotator, true);
+                }
+            }
+        }
+
         if (HitBone == FName("head"))
         {
             DamageAmount += HeadShotDamage;
@@ -322,6 +339,7 @@ float ANXNonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& 
     }
     return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
+
 
 
 void ANXNonPlayerCharacter::ApplyKnockBack(FVector Direction, float Strength)

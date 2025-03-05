@@ -19,87 +19,65 @@ void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerCom
     Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
     ANXAIController* AIC = Cast<ANXAIController>(OwnerComp.GetAIOwner());
-    if (IsValid(AIC) == true)
+    if (!IsValid(AIC)) return;
+
+    ANXNonPlayerCharacter* NPC = Cast<ANXNonPlayerCharacter>(AIC->GetPawn());
+    if (!IsValid(NPC)) return;
+
+    UWorld* World = NPC->GetWorld();
+    if (!IsValid(World)) return;
+
+    FVector CenterPosition = NPC->GetActorLocation();
+    float DetectRadius = NPC->GetDetectRadius();
+    TArray<FOverlapResult> OverlapResults;
+    FCollisionQueryParams CollisionQueryParams(NAME_None, false, NPC);
+
+    bool bResult = World->OverlapMultiByChannel(
+        OverlapResults,
+        CenterPosition,
+        FQuat::Identity,
+        ECollisionChannel::ECC_GameTraceChannel2,
+        FCollisionShape::MakeSphere(DetectRadius),
+        CollisionQueryParams
+    );
+
+    if (bResult)
     {
-        ANXNonPlayerCharacter* NPC = Cast<ANXNonPlayerCharacter>(AIC->GetPawn());
-        if (IsValid(NPC) == true)
+        bool bPlayerDetected = false;
+        ANXCharacterBase* DetectedPC = nullptr;
+
+        for (const FOverlapResult& OverlapResult : OverlapResults)
         {
-            UWorld* World = NPC->GetWorld();
-            if (IsValid(World) == true)
+            ANXCharacterBase* PC = Cast<ANXCharacterBase>(OverlapResult.GetActor());
+            if (!IsValid(PC)) continue;
+
+            AController* Controller = PC->GetController();
+            if (IsValid(Controller) && Controller->IsPlayerController())
             {
-                FVector CenterPosition = NPC->GetActorLocation();
-
-                float DetectRadius = NPC->GetDetectRadius();
-
-                TArray<FOverlapResult> OverlapResults;
-
-                FCollisionQueryParams CollisionQueryParams(NAME_None, false, NPC);
-
-                bool bResult = World->OverlapMultiByChannel(
-                    OverlapResults,
-                    CenterPosition,
-                    FQuat::Identity, 
-                    ECollisionChannel::ECC_GameTraceChannel2, 
-                    FCollisionShape::MakeSphere(DetectRadius), 
-                    CollisionQueryParams
-                );
-
-                if (bResult == true)
-                {
-                    bool bPlayerDetected = false;
-
-                    for (auto const& OverlapResult : OverlapResults)
-                    {
-                        ANXCharacterBase* PC = Cast<ANXCharacterBase>(OverlapResult.GetActor());
-                        if (IsValid(PC) == true && PC->GetController()->IsPlayerController() == true)
-                        {
-                            OwnerComp.GetBlackboardComponent()->SetValueAsObject(ANXAIController::TargetCharacterKey, PC);
-                            bPlayerDetected = true;
-
-                            if (ANXAIController::ShowAIDebug == 1)
-                            {
-                                UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Detected!")));
-                                DrawDebugSphere(World, CenterPosition, DetectRadius, 16, FColor::Red, false, 0.5f);
-                                DrawDebugPoint(World, PC->GetActorLocation(), 10.f, FColor::Red, false, 0.5f);
-                                DrawDebugLine(World, NPC->GetActorLocation(), PC->GetActorLocation(), FColor::Red, false, 0.5f, 0u, 3.f);
-                            }
-                            break;
-                        }
-                    }
-
-                    if (bPlayerDetected)
-                    {
-                        if (NPC->GetMovementComponent())
-                        {
-                            UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());
-                            if (MovementComponent)
-                            {
-                                MovementComponent->MaxWalkSpeed = NPC->GetSprintSpeed(); 
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (NPC->GetMovementComponent())
-                        {
-                            UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());
-                            if (MovementComponent)
-                            {
-                                MovementComponent->MaxWalkSpeed = NPC->GetNormalSpeed(); 
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    OwnerComp.GetBlackboardComponent()->SetValueAsObject(ANXAIController::TargetCharacterKey, nullptr);
-                }
-
-                if (ANXAIController::ShowAIDebug == 1)
-                {
-                    DrawDebugSphere(World, CenterPosition, DetectRadius, 16, FColor::Green, false, 0.5f);
-                }
+                DetectedPC = PC;
+                bPlayerDetected = true;
+                break;
             }
         }
+
+        if (OwnerComp.GetBlackboardComponent())
+        {
+            OwnerComp.GetBlackboardComponent()->SetValueAsObject(ANXAIController::TargetCharacterKey, DetectedPC);
+        }
+
+        UCharacterMovementComponent* MovementComponent = Cast<UCharacterMovementComponent>(NPC->GetMovementComponent());
+        if (MovementComponent)
+        {
+            MovementComponent->MaxWalkSpeed = bPlayerDetected ? NPC->GetSprintSpeed() : NPC->GetNormalSpeed();
+        }
+    }
+    else if (OwnerComp.GetBlackboardComponent())
+    {
+        OwnerComp.GetBlackboardComponent()->SetValueAsObject(ANXAIController::TargetCharacterKey, nullptr);
+    }
+
+    if (ANXAIController::ShowAIDebug == 1)
+    {
+        DrawDebugSphere(World, CenterPosition, DetectRadius, 16, bResult ? FColor::Red : FColor::Green, false, 0.5f);
     }
 }

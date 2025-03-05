@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Gimmick/NXItemInterface.h" 
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "NXItem.generated.h"
 
 class USphereComponent;
@@ -29,6 +31,10 @@ protected:
 	UParticleSystem* PickupParticle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Effects")
 	USoundBase* PickupSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Effects")
+	UNiagaraSystem* HealingEffect;
+
 
 	virtual void OnItemOverlap(
 		UPrimitiveComponent* OverlappedComp,

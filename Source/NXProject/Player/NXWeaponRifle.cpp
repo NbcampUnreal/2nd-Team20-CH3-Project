@@ -83,7 +83,7 @@ void ANXWeaponRifle::Fire()
     FVector MuzzleLocation = MuzzleOffset->GetComponentLocation();
     FVector Direction = (TargetPoint - MuzzleLocation).GetSafeNormal();
 
-    DrawDebugLine(GetWorld(), MuzzleLocation, TargetPoint, FColor::Red, false, 1.0f, 0, 2.0f);
+    DrawDebugLine(GetWorld(), MuzzleLocation, TargetPoint, FColor::Red, false, 0.2f, 0, 4.0f);
 
     if (HitResult.GetActor())
     {
