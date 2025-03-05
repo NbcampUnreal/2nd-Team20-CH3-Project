@@ -561,46 +561,51 @@ void ANXPlayerCharacter::Die()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && DeathMontage)
 	{
-		
 		bool bPlayed = AnimInstance->Montage_Play(DeathMontage) > 0.0f;
 
 		if (!bPlayed)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Die(): Death Montage did not play! 애니메이션이 없음"));
-			OnDeath(nullptr, false);
+			UE_LOG(LogTemp, Error, TEXT("Die(): Death Montage did not play!"));
 		}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Death montage is playing!"));
 
-			OnDeathMontageEndedDelegate.BindUObject(this, &ANXPlayerCharacter::OnDeath);
+			OnDeathMontageEndedDelegate.BindUObject(this, &ANXCharacterBase::OnDeathMontageEnd);
 			AnimInstance->Montage_SetEndDelegate(OnDeathMontageEndedDelegate, DeathMontage);
+
+			UE_LOG(LogTemp, Warning, TEXT("Death animation started."));
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Die(): AnimInstance 또는 DeathMontage가 NULL!"));
-		OnDeath(nullptr, false);
+		UE_LOG(LogTemp, Error, TEXT("Die(): AnimInstance or DeathMontage is NULL!"));
+		OnDeathMontageEnd(nullptr, false);
 	}
 
-	if (AController* MyController = GetController())
+	TObjectPtr<AController> MyController = GetController();
+	if (MyController)
 	{
 		MyController->UnPossess();
-		MyController->SetIgnoreMoveInput(true);
-		MyController->SetIgnoreLookInput(true);
 	}
 }
 
-void ANXPlayerCharacter::OnDeath(UAnimMontage* Montage, bool bInterrupted)
+void ANXPlayerCharacter::OnDeathMontageEnd(UAnimMontage* Montage, bool bInterrupted)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[OnDeath] 플레이어 사망 처리 시작"));
+	UE_LOG(LogTemp, Warning, TEXT("OnDeathMontageEnd called"));
 
-	if (ANXGameState* NXGameState = GetWorld() ? GetWorld()->GetGameState<ANXGameState>() : nullptr)
+	if (Montage == DeathMontage)
 	{
-		NXGameState->OnGameOver();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[OnDeath] NXGameState가 NULL! GameOver UI를 실행할 수 없음"));
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->DisableMovement();
+			GetCharacterMovement()->StopMovementImmediately();
+
+			bIsDying = false;
+
+			UE_LOG(LogTemp, Warning, TEXT("Death animation finished."));
+		}
 	}
 }
+
+

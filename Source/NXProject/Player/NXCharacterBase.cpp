@@ -155,9 +155,15 @@ float ANXCharacterBase::GetCurrentHealth() const
 	return CurrentHealth;
 }
 
+void ANXCharacterBase::SetCurrentHealth(float NewHealth)
+{
+	CurrentHealth = NewHealth; 
+}
+
 void ANXCharacterBase::SetHealth(float NewHealth)
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("Setting health: %f"), NewHealth);
+
 	if (FMath::IsNearlyEqual(CurrentHealth, NewHealth, KINDA_SMALL_NUMBER))
 	{
 		return;

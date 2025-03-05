@@ -23,24 +23,6 @@ void ANXGameState::BeginPlay()
 	);
 }
 
-void ANXGameState::OnGameOver()
-{
-	UWorld* World = this->GetWorld();
-	if (World)
-	{
-		APlayerController* PlayerController = World->GetFirstPlayerController();
-		if (ANXPlayerController* NXPlayerController = Cast<ANXPlayerController>(PlayerController))
-		{
-			NXPlayerController->ShowGameOverWidget(true); // GameOver UI 표시
-			UE_LOG(LogTemp, Warning, TEXT("[OnGameOver] GameOver UI 활성화"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("[OnGameOver] NXPlayerController 캐스팅 실패"));
-		}
-	}
-}
-
 void ANXGameState::UpdateHUD()
 {
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())

@@ -45,11 +45,11 @@ public:
 	FTimerDelegate DeathDelegate;
 
 	//void DestroyCharacter();
+protected:
+
+     void UpdateHUD();
 
 private:
-
-	void UpdateHUD();
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
 	float NormalSpeeds;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move", meta = (AllowPrivateAccess = "true"))
@@ -88,6 +88,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	void SetCurrentHealth(float NewHealth);
 
 	UFUNCTION(BlueprintCallable)
 	float GetAttackDamage() const;

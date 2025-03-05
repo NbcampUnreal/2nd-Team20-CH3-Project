@@ -25,10 +25,12 @@ public:
 	virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void Die();
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	ANXWeaponRifle* GetWeaponActor() { return WeaponActor; }
 
-	UFUNCTION()
-	void OnDeath(UAnimMontage* Montage, bool bInterrupted);
+	virtual void Die();
+	
+	void OnDeathMontageEnd(UAnimMontage* Montage, bool bInterrupted);
 
 protected:
 
@@ -89,11 +91,6 @@ protected:
 	TSubclassOf<UUserWidget> AmmoWidgetClass; 
 	UPROPERTY()
 	UNXAmmoWidget* AmmoWidget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<UUserWidget> GameOverWidgetClass;
-
-	UUserWidget* GameOverWidget;
 
 	void Move(const FInputActionValue& value);
 	void StartJump(const FInputActionValue& value);
