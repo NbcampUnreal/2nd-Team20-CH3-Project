@@ -94,10 +94,10 @@ void ANXWeaponRifle::Fire()
     bCanFire = false;
     GetWorld()->GetTimerManager().SetTimer(FireRateTimer, this, &ANXWeaponRifle::ResetFire, FireRate, false);
 
-    if (bIsFiring)
+    /*if (bIsFiring)
     {
         GetWorld()->GetTimerManager().SetTimer(FireRateTimer, this, &ANXWeaponRifle::Fire, FireRate, true);
-    }
+    }*/
 }
 
 bool ANXWeaponRifle::CanFire() const
@@ -119,6 +119,7 @@ void ANXWeaponRifle::FinishReload()
 {
     CurrentAmmo = MaxAmmo;
     bIsReloading = false;
+    bCanFire = true;
     UpdateAmmo(CurrentAmmo);
 }
 
