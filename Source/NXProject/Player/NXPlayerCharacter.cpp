@@ -376,9 +376,19 @@ void ANXPlayerCharacter::StopPunchAttack(const FInputActionValue& value)
 
 void ANXPlayerCharacter::StartAttack()
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	AttackAnimation();
 
-	if (WeaponActor) 
+	if (GetCharacterMovement()->MaxWalkSpeed == GetSprintSpeed())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();  
+	}
+
+	if (WeaponActor)
 	{
 		WeaponActor->Fire();
 	}
