@@ -136,6 +136,12 @@ void ANXWeaponRifle::UpdateAmmo(int32 NewAmmo)
 
     UE_LOG(LogTemp, Log, TEXT("현재 탄약: %d"), CurrentAmmo);
 }
+
+void ANXWeaponRifle::AddAmmo(int32 AmmoToAdd)
+{
+    UpdateAmmo(FMath::Min(CurrentAmmo + AmmoToAdd, MaxAmmo));
+}
+
 void ANXWeaponRifle::StartFiring()
 {
     if (!bIsFiring)

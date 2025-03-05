@@ -24,6 +24,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	ANXWeaponRifle* GetWeaponActor() { return WeaponActor; }
+
 protected:
 
 	UPROPERTY()

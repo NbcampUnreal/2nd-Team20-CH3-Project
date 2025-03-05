@@ -26,6 +26,7 @@ public:
 	void StopFiring();
 	void Reload();
 	bool CanFire() const;
+	void AddAmmo(int32 AmmoToAdd);
 
 	UPROPERTY(BlueprintAssignable, Category = "Weapon")
 	FOnAmmoChanged OnAmmoChanged;
