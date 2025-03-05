@@ -4,6 +4,7 @@
 #include "Player/NXCharacterBase.h"
 #include "Player/NXCrosshairHUD.h"
 #include "Blueprint/UserWidget.h" 
+#include "Game/NXGameState.h"
 #include "NXPlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -23,9 +24,11 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	ANXWeaponRifle* GetWeaponActor() { return WeaponActor; }
+
+	virtual void Die();
+
+	UFUNCTION()
+	void OnDeath(UAnimMontage* Montage, bool bInterrupted);
 
 protected:
 
@@ -71,18 +74,26 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TObjectPtr<class UAnimMontage> ReloadMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<class UAnimMontage> AttackMontage;
+
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void PlayMeleeAttackAnimation();
 	void ReloadAnimation();
+	void AttackAnimation();
 
 	UFUNCTION(Blueprintpure, Category = "Movement")
 	bool GetIsCrouching() const;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> AmmoWidgetClass; 
-
 	UPROPERTY()
 	UNXAmmoWidget* AmmoWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> GameOverWidgetClass;
+
+	UUserWidget* GameOverWidget;
 
 	void Move(const FInputActionValue& value);
 	void StartJump(const FInputActionValue& value);

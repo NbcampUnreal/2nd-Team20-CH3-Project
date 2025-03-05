@@ -22,6 +22,9 @@ public:
 
     void UpdateHUD();
 
+	UFUNCTION(BlueprintCallable, Category = "Game")
+	void OnGameOver();
+
 private:
 
 	FTimerHandle HUDUpdateTimerHandle;

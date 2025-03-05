@@ -83,9 +83,6 @@ void ANXCharacterBase::Die()
 			//float MontageDuration = DeathMontage->GetPlayLength();
 			//GetWorldTimerManager().SetTimer(DeathTimerHandle, DeathDelegate, MontageDuration, false);
 
-			
-
-
 			OnDeathMontageEndedDelegate.BindUObject(this, &ANXCharacterBase::OnDeathMontageEnd);
 			AnimInstance->Montage_SetEndDelegate(OnDeathMontageEndedDelegate, DeathMontage);
 
@@ -104,13 +101,6 @@ void ANXCharacterBase::Die()
 		MyController->UnPossess();
 	}
 
-	if (APlayerController* PC = Cast<APlayerController>(MyController))
-	{
-		if (ANXPlayerController* NXPC = Cast<ANXPlayerController>(PC))
-		{
-			NXPC->SetHUDVisibility(false);
-		}
-	}
 	SetLifeSpan(3.0f);  
 }
 

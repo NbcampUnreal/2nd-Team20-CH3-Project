@@ -16,6 +16,9 @@ class NXPROJECT_API ANXPlayerController : public APlayerController
 public:
 	ANXPlayerController();
 
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ShowGameOverWidget(bool bIsVisible);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputMappingContext* InputMappingContext;
 
@@ -52,11 +55,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> GameOverWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	UUserWidget* GameOverWidgetInstance;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
 	UUserWidget* HUDWidgetInstance;
 
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	UUserWidget* GetHUDWidget() const;
+
+	UPROPERTY()
+	UUserWidget* HUDWidget;
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void SetHUDVisibility(bool bIsVisible);

@@ -11,8 +11,6 @@
 
 ANXWeaponRifle::ANXWeaponRifle()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -49,17 +47,15 @@ void ANXWeaponRifle::Fire()
 {
     if (!CanFire()) return;
 
-   
+    UE_LOG(LogTemp, Log, TEXT("Fire() 호출됨 - 현재 탄약: %d, bCanFire: %d, bIsFiring: %d"), CurrentAmmo, bCanFire, bIsFiring);
     UpdateAmmo(CurrentAmmo - 1);
 
-   
     UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
     if (IsValid(AnimInstance) && IsValid(FireMontage))
     {
         AnimInstance->Montage_Play(FireMontage);
     }
 
-    
     APlayerController* PlayerController = Cast<APlayerController>(GetOwner()->GetInstigatorController());
     if (!PlayerController) return;
 
@@ -83,7 +79,7 @@ void ANXWeaponRifle::Fire()
     FVector MuzzleLocation = MuzzleOffset->GetComponentLocation();
     FVector Direction = (TargetPoint - MuzzleLocation).GetSafeNormal();
 
-    DrawDebugLine(GetWorld(), MuzzleLocation, TargetPoint, FColor::Red, false, 0.2f, 0, 4.0f);
+    DrawDebugLine(GetWorld(), MuzzleLocation, TargetPoint, FColor::Red, false, 0.2f, 0, 2.0f);
 
     if (HitResult.GetActor())
     {
@@ -114,6 +110,8 @@ void ANXWeaponRifle::Reload()
     if (bIsReloading || CurrentAmmo == MaxAmmo) return;
 
     bIsReloading = true;
+    bIsFiring = false;
+    GetWorld()->GetTimerManager().ClearTimer(FireRateTimer);
     GetWorld()->GetTimerManager().SetTimer(ReloadTimer, this, &ANXWeaponRifle::FinishReload, ReloadTime, false);
 }
 
@@ -127,6 +125,13 @@ void ANXWeaponRifle::FinishReload()
 void ANXWeaponRifle::ResetFire()
 {
     bCanFire = true;
+
+    UE_LOG(LogTemp, Log, TEXT("ResetFire() - bCanFire: %d, bIsFiring: %d"), bCanFire, bIsFiring);
+
+    if (bIsFiring) 
+    {
+        Fire();
+    }
 }
 
 void ANXWeaponRifle::UpdateAmmo(int32 NewAmmo)
@@ -136,26 +141,20 @@ void ANXWeaponRifle::UpdateAmmo(int32 NewAmmo)
 
     UE_LOG(LogTemp, Log, TEXT("현재 탄약: %d"), CurrentAmmo);
 }
-
-void ANXWeaponRifle::AddAmmo(int32 AmmoToAdd)
-{
-    UpdateAmmo(FMath::Min(CurrentAmmo + AmmoToAdd, MaxAmmo));
-}
-
 void ANXWeaponRifle::StartFiring()
 {
-    if (!bIsFiring)
+    if (!bIsFiring && CanFire()) 
     {
         bIsFiring = true;
+        UE_LOG(LogTemp, Log, TEXT("StartFiring() - 연속 사격 시작"));
         Fire();  
-        GetWorld()->GetTimerManager().SetTimer(FireRateTimer, this, &ANXWeaponRifle::ContinuousFire, FireRate, true);
     }
 }
 
 void ANXWeaponRifle::StopFiring()
 {
     bIsFiring = false;
-    GetWorld()->GetTimerManager().ClearTimer(FireRateTimer); 
+    UE_LOG(LogTemp, Log, TEXT("StopFiring() - 연속 사격 중단"));
 }
 
 void ANXWeaponRifle::ContinuousFire()

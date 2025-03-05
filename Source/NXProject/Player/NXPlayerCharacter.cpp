@@ -3,6 +3,7 @@
 #include "Player/NXWeaponRifle.h"
 #include "AI/NXNonPlayerCharacter.h"
 #include "Player/NXAmmoWidget.h" 
+#include "Game/NXGameState.h"
 #include "Blueprint/UserWidget.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/World.h" 
@@ -18,6 +19,8 @@
 
 ANXPlayerCharacter::ANXPlayerCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+	
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 
 	SpringArmComp->SetupAttachment(RootComponent);
@@ -42,8 +45,8 @@ ANXPlayerCharacter::ANXPlayerCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true; 
 
-}
 
+}
 void ANXPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -64,7 +67,6 @@ void ANXPlayerCharacter::BeginPlay()
 			AmmoWidget->AddToViewport();
 		}
 	}
-
 	WeaponActor = GetWorld()->SpawnActor<ANXWeaponRifle>(Weapon);
 	if (IsValid(WeaponActor))
 	{
@@ -116,7 +118,7 @@ bool ANXPlayerCharacter::CheckIfAimingAtEnemy()
 		ANXNonPlayerCharacter* HitEnemy = Cast<ANXNonPlayerCharacter>(HitResult.GetActor());
 
 		FColor LineColor = HitEnemy ? FColor::Red : FColor::Green;
-		DrawDebugLine(GetWorld(), Start, End, LineColor, false, 0.1f, 0, 2.0f);
+		//DrawDebugLine(GetWorld(), Start, End, LineColor, false, 0.1f, 0, 2.0f);
 
 		return HitEnemy != nullptr; 
 	}
@@ -211,14 +213,12 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					this,
 					&ANXPlayerCharacter::StartAttack 
 				);
-
 				EnhancedInput->BindAction(
 					PlayerContorller->AttackAction,
 					ETriggerEvent::Completed,
 					this,
 					&ANXPlayerCharacter::StopAttack
 				);
-
 			}
 
 			if (PlayerContorller->PunchAction)
@@ -236,7 +236,6 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					this,
 					&ANXPlayerCharacter::StopPunchAttack
 				);
-
 			}
 				
 			if (PlayerContorller->ReloadAction)
@@ -320,6 +319,7 @@ void ANXPlayerCharacter::StartSprint(const FInputActionValue& value)
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = GetSprintSpeed();
+		
 		UE_LOG(LogTemp, Warning, TEXT("Sprint!"));
 	}
 }
@@ -328,9 +328,11 @@ void ANXPlayerCharacter::StopSprint(const FInputActionValue& value)
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
+	
 		UE_LOG(LogTemp, Warning, TEXT("Sprint Stop!"));
 	}
 }
+
 void ANXPlayerCharacter::StartPunchAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT(" StartPunchAttack() 호출됨"));
@@ -374,6 +376,8 @@ void ANXPlayerCharacter::StopPunchAttack(const FInputActionValue& value)
 
 void ANXPlayerCharacter::StartAttack()
 {
+	AttackAnimation();
+
 	if (WeaponActor) 
 	{
 		WeaponActor->Fire();
@@ -450,7 +454,6 @@ void ANXPlayerCharacter::InputQuickSlot02(const FInputActionValue& Invalue)
 		WeaponInstance = nullptr;
 	}
 }
-
 void ANXPlayerCharacter::PlayMeleeAttackAnimation()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -507,11 +510,97 @@ void ANXPlayerCharacter::ReloadAnimation()
 	}
 }
 
+void ANXPlayerCharacter::AttackAnimation()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+
+	if (!IsValid(AnimInstance))
+	{
+		UE_LOG(LogTemp, Error, TEXT("AnimInstance가 유효하지 않음! 애니메이션 실행 불가"));
+		return;
+	}
+
+	if (!IsValid(AttackMontage))
+	{
+		UE_LOG(LogTemp, Error, TEXT("AttackMontage가 설정되지 않음!"));
+		return;
+	}
+
+	if (!AnimInstance->Montage_IsPlaying(AttackMontage))
+	{
+		AnimInstance->Montage_Play(AttackMontage);
+		UE_LOG(LogTemp, Warning, TEXT("공격 애니메이션 실행됨!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("공격 애니메이션 이미 실행 중"));
+	}
+}
+
 void ANXPlayerCharacter::UpdateAmmoUI(int32 CurrentAmmo)
 {
 	if (AmmoWidget && WeaponActor)
 	{
 		int32 MaxAmmo = WeaponActor->GetMaxAmmo();
 		AmmoWidget->UpdateAmmoDisplay(CurrentAmmo, MaxAmmo);
+	}
+}
+
+void ANXPlayerCharacter::Die()
+{
+	if (bIsDying)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Die] 이미 사망 처리 중, 중복 실행 방지"));
+		return;
+	}
+	bIsDying = true;
+
+	UE_LOG(LogTemp, Error, TEXT("[Die] Die 함수 호출됨!"));
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathMontage)
+	{
+		
+		bool bPlayed = AnimInstance->Montage_Play(DeathMontage) > 0.0f;
+
+		if (!bPlayed)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Die(): Death Montage did not play! 애니메이션이 없음"));
+			OnDeath(nullptr, false);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Death montage is playing!"));
+
+			OnDeathMontageEndedDelegate.BindUObject(this, &ANXPlayerCharacter::OnDeath);
+			AnimInstance->Montage_SetEndDelegate(OnDeathMontageEndedDelegate, DeathMontage);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Die(): AnimInstance 또는 DeathMontage가 NULL!"));
+		OnDeath(nullptr, false);
+	}
+
+	if (AController* MyController = GetController())
+	{
+		MyController->UnPossess();
+		MyController->SetIgnoreMoveInput(true);
+		MyController->SetIgnoreLookInput(true);
+	}
+}
+
+void ANXPlayerCharacter::OnDeath(UAnimMontage* Montage, bool bInterrupted)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[OnDeath] 플레이어 사망 처리 시작"));
+
+	if (ANXGameState* NXGameState = GetWorld() ? GetWorld()->GetGameState<ANXGameState>() : nullptr)
+	{
+		NXGameState->OnGameOver();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[OnDeath] NXGameState가 NULL! GameOver UI를 실행할 수 없음"));
 	}
 }
