@@ -8,10 +8,10 @@
 #include "Engine/OverlapResult.h"
 
 UBTService_DetectPlayerCharacter::UBTService_DetectPlayerCharacter(const FObjectInitializer& ObjectInitializer)
-	:Super(ObjectInitializer)
+    :Super(ObjectInitializer)
 {
-	NodeName = TEXT("DetectPlayerCharacter");
-	Interval = 1.f;
+    NodeName = TEXT("DetectPlayerCharacter");
+    Interval = 1.f;
 }
 
 void UBTService_DetectPlayerCharacter::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
