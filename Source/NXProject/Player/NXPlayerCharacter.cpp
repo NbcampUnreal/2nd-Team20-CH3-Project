@@ -271,7 +271,6 @@ void ANXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
-
 void ANXPlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (!Controller) return;
@@ -381,12 +380,19 @@ void ANXPlayerCharacter::StartAttack()
 		return;
 	}
 
-	AttackAnimation();
-
 	if (GetCharacterMovement()->MaxWalkSpeed == GetSprintSpeed())
 	{
-		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();  
+		GetCharacterMovement()->MaxWalkSpeed = GetNormalSpeed();
 	}
+
+	if (WeaponActor && WeaponActor->GetCurrentAmmo() <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("총알이 부족하여 공격 애니메이션 실행하지 않음"));
+		return;
+	}
+	AttackAnimation();
+
+	bool bIsFiring = true;
 
 	if (WeaponActor)
 	{
@@ -435,6 +441,11 @@ bool ANXPlayerCharacter::GetIsCrouching() const
 
 void ANXPlayerCharacter::Reload(const FInputActionValue& value)
 {
+	if (WeaponActor && WeaponActor->GetCurrentAmmo() == WeaponActor->GetMaxAmmo())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("총알이 가득 차 있어서 장전 불가능"));
+		return; 
+	}
 	UE_LOG(LogTemp, Warning, TEXT("Reload"));
 
 	ReloadAnimation();
@@ -617,5 +628,3 @@ void ANXPlayerCharacter::OnDeathMontageEnd(UAnimMontage* Montage, bool bInterrup
 		}
 	}
 }
-
-
